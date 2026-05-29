@@ -32,6 +32,7 @@ program
   .command('projects')
   .description('list projects')
   .option('-a, --all', 'show all visible projects (default: only those you are a resource on)')
+  .option('--active', 'filter to status=active (status IDs are TODO in the SQL handler)')
   .option('-q <query>', 'filter by name substring')
   .option('--json', 'output JSON')
   .action(projectsCommand);
