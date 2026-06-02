@@ -7,6 +7,7 @@ import { meCommand } from './commands/me.js';
 import { projectsCommand, projectCommand, tasksCommand } from './commands/projects.js';
 import { timeListCommand, timeLogCommand, timeDeleteCommand } from './commands/time.js';
 import { debugTokenCommand } from './commands/debug.js';
+import { ptoCommand } from './commands/pto.js';
 
 const program = new Command();
 
@@ -71,6 +72,12 @@ time
   .command('delete <id>')
   .description('delete a time entry by id')
   .action(timeDeleteCommand);
+
+program
+  .command('pto')
+  .description('show your PTO balance')
+  .option('--json', 'output JSON')
+  .action(ptoCommand);
 
 const debug = program.command('debug').description('debugging helpers');
 debug
