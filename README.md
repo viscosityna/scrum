@@ -1,53 +1,110 @@
 # scrum
 
-CLI for [scrumtime](https://apps.viscosityna.com/ords/f?p=112), Viscosity NA's internal timesheet/project app.
+Command-line client for [scrumtime](https://apps.viscosityna.com/ords/f?p=112), Viscosity NA's internal timesheet/project app.
+
+```
+$ scrum me
+MPEREIRA  (Marco Pereira)
+  id:        260
+  role:      manager
+  pto hours: 82
+
+$ scrum projects
+AMP      AMP Support
+INTERN   Internal
+MS       Managed Services
+...
+
+$ scrum time
+2026-06-01 → 2026-06-02  (2 entries, 16.00h)
+  2026-06-02      8h  task#6008  Started implementing remedial action subtype...
+
+$ scrum time log INTERN 4023 1.5 -n "weekly team sync"
+logged 1.5h on 2026-06-02 (id 190104)
+```
+
+## Prerequisites
+
+- **Node.js 20+** ([download](https://nodejs.org/)).
+- **A Viscosity Microsoft account** that's been assigned the `scrumtime user` app role.
+  Ask Marco (or whoever holds the "scrumtime API" Entra app registration) to add you under
+  *Entra → Enterprise applications → scrumtime API → Users and groups*. Without this, sign-in succeeds but every API call returns 403.
+- **GitHub access** to the [private repo](https://github.com/Markuspg1/scrumtime-cli) (ask Marco).
 
 ## Install
 
 ```
-git clone <repo> scrumtime-cli && cd scrumtime-cli
+git clone https://github.com/Markuspg1/scrumtime-cli.git
+cd scrumtime-cli
 npm install
 npm run build
-npm link            # exposes `scrum` globally
+npm link            # exposes `scrum` globally on this machine
 ```
 
-## First-time setup
+(`npm link` requires permission to write to your global `node_modules`. If you'd rather not, run via `node dist/index.js …` from inside the cloned directory.)
+
+## First-run
 
 ```
-scrum login --client-id <oauth_client_id>
+scrum login
 ```
 
-The `--client-id` is needed once; thereafter the value is stored in your config and `scrum login` is enough. Ask an admin if you don't have it (it's the value from `SELECT client_id FROM user_ords_clients WHERE name = 'scrumtime-cli'` in the scrumtm schema).
+Your default browser opens at Microsoft's sign-in page. If you're already signed into Microsoft 365 in that browser, sign-in is silent and you'll be redirected straight back to a `localhost` page that says "Signed in." Otherwise complete the Microsoft prompt as usual.
 
-`scrum login` opens your browser to the Microsoft sign-in page (Viscosity NA tenant). After you sign in, Microsoft redirects to a local port the CLI is listening on, completes the OAuth2 authorization-code + PKCE exchange, and stores the access + refresh tokens in a per-user config file:
-
-- Windows — `%APPDATA%\scrumtime-nodejs\tokens.json`
-- macOS — `~/Library/Preferences/scrumtime-nodejs/tokens.json`
-- Linux — `~/.config/scrumtime-nodejs/tokens.json`
-
-The CLI never sees or stores your password. Tokens are protected by per-user filesystem permissions; access tokens are short-lived (Microsoft rotates them).
-
-## Usage
-
+Expected terminal output:
 ```
-scrum me                                       # show authenticated employee + role (self/manager/admin)
-scrum projects                                 # projects you're a resource on
-scrum projects --all                           # all projects you can see (role-scoped server-side)
-scrum project <ABBR>                           # one project (by abbr or id)
-scrum tasks <ABBR>                             # tasks of a project
-scrum time                                     # this week's entries (yours)
-scrum time --date 2026-05-19                   # one day
-scrum time log <project> <task> <hours> [-n "note"]
-scrum time delete <id>
-scrum logout                                   # clear cached tokens
+signed in as YOURUSERNAME — role: self
 ```
 
-## Config location
+`role` will be `self`, `manager` (if you appear as PM/owner/account on any project), or `admin`.
 
-`api_base`, `client_id`, OAuth URLs, etc. are hardcoded to the Viscosity NA tenant. The per-user config dir just caches the signed-in `username` so `scrum me` can tell you whether you need to re-login. Tokens live in a separate `tokens.json` in the same directory.
+If you instead see *"Microsoft sign-in succeeded, but you do not have access to scrumtime"* — the role hasn't been assigned yet. Send the message to the scrumtime admin.
 
-## Authorization
+## Common commands
 
-The CLI doesn't enforce permissions client-side; the server is the source of truth. `scrum me` shows your effective role (`self` / `manager` / `admin`), and the CLI uses it only to hide commands that would always return 403 for your role.
+| | |
+|---|---|
+| `scrum me` | show your employee row + current role |
+| `scrum projects` | projects you're a resource on |
+| `scrum projects --all` | all projects you can see |
+| `scrum projects --active` | filter to active status |
+| `scrum projects -q PARTIAL` | search by name |
+| `scrum project <ABBR>` | show one project |
+| `scrum tasks <ABBR>` | list tasks on a project |
+| `scrum time` | your last 14 days of entries |
+| `scrum time -d 2026-06-01` | one day's entries |
+| `scrum time --from 2026-05-01 --to 2026-05-31` | a date range |
+| `scrum time log <ABBR> <task_id> <hours> -n "note"` | log time today |
+| `scrum time delete <id>` | delete a time entry of yours |
+| `scrum pto` | PTO balance + anniversary |
+| `scrum logout` | clear cached tokens |
+| `scrum config` | show current CLI configuration |
 
-See [internal/scrumtime/AUTHORIZATION.md](../internal/scrumtime/AUTHORIZATION.md) for the full permission matrix.
+Add `--json` to most commands for machine-readable output.
+
+## Where your data lives
+
+- **Tokens** (Microsoft access + refresh tokens) cache in a per-user config file:
+  - Windows — `%APPDATA%\scrumtime-nodejs\tokens.json`
+  - macOS — `~/Library/Preferences/scrumtime-nodejs/tokens.json`
+  - Linux — `~/.config/scrumtime-nodejs/tokens.json`
+- **CLI config** (your username) sits in `config.json` in the same dir.
+- **No password is ever stored** — you authenticate against Microsoft directly.
+
+## How auth works (one paragraph)
+
+The CLI does an OAuth2 authorization-code + PKCE flow against your Microsoft Entra tenant. The access token Microsoft issues is sent to a small Cloudflare Worker (`scrumtime-api.devops-1e0.workers.dev`) that validates it against Microsoft's public keys, then forwards your request to the scrumtime ORDS API with a short-lived shared bearer token — so your identity flows through to the SQL handlers, but no per-user secret ever lives on your laptop or in transit. See [internal/scrumtime/ARCHITECTURE.md](https://github.com/Markuspg1/internal/blob/main/scrumtime/ARCHITECTURE.md) in the ops repo for the full picture.
+
+## Troubleshooting
+
+| Symptom | What to try |
+|---|---|
+| `scrum login` → "Microsoft sign-in succeeded, but you do not have access" | The `scrumtime user` app role isn't assigned to you yet. Message the scrumtime admin. |
+| `scrum login` browser doesn't open | Copy the URL from the terminal and paste it into a browser. The local listener will still catch the redirect. |
+| `GET /me → 401 Unauthorized` after some time | Tokens may have expired. Run `scrum logout && scrum login` to refresh. |
+| `scrum time log` returns `403 you are not a resource on this task's project` | You're not assigned as a resource on the project the task belongs to. Have your PM add you in scrumtime. |
+| Anything else | `scrum debug token` shows you the current Microsoft token's claims (without printing the token itself). |
+
+## Report bugs / feedback
+
+File an issue at https://github.com/Markuspg1/scrumtime-cli/issues, or message Marco directly.

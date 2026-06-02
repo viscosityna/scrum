@@ -2,7 +2,7 @@
 import { Command } from 'commander';
 import kleur from 'kleur';
 import { ApiError } from './api.js';
-import { loginCommand, logoutCommand } from './commands/login.js';
+import { loginCommand, logoutCommand, configCommand } from './commands/login.js';
 import { meCommand } from './commands/me.js';
 import { projectsCommand, projectCommand, tasksCommand } from './commands/projects.js';
 import { timeListCommand, timeLogCommand, timeDeleteCommand } from './commands/time.js';
@@ -22,6 +22,12 @@ program
   .action(loginCommand);
 
 program.command('logout').description('clear cached tokens').action(logoutCommand);
+
+program
+  .command('config')
+  .description('show current CLI configuration (no secrets)')
+  .option('--json', 'output JSON')
+  .action(configCommand);
 
 program
   .command('me')
