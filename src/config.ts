@@ -19,7 +19,7 @@ export interface CliConfig {
  */
 function defaults(): CliConfig {
   return {
-    api_base: process.env.SCRUM_API_BASE ?? 'https://apps.viscosityna.com/ords/scrumtm/api/v1',
+    api_base: process.env.SCRUM_API_BASE ?? 'https://scrumtime-api.devops-1e0.workers.dev/api/v1',
     authorize_url:
       process.env.SCRUM_AUTHORIZE_URL ??
       `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/authorize`,
