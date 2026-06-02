@@ -25,22 +25,38 @@ logged 1.5h on 2026-06-02 (id 190104)
 
 ## Prerequisites
 
-- **Node.js 20+** ([download](https://nodejs.org/)).
-- **A Viscosity Microsoft account** (any `@viscosityna.com` account works — no per-user role assignment needed).
-  You also need a scrumtime employee record under your `@viscosityna.com` email; if you've never logged into scrumtime via the web app, you may not have one yet — message the scrumtime admin.
-- **GitHub access** to the [private repo](https://github.com/Markuspg1/scrumtime-cli) (ask Marco).
+- **A Viscosity Microsoft account.** Any `@viscosityna.com` Microsoft sign-in works — no per-user role setup.
+  You also need a scrumtime employee record under your `@viscosityna.com` email; if you've never been logged into scrumtime, you may not have one yet — message the scrumtime admin.
+- **GitHub access** to [`viscosityna/scrumtime-cli`](https://github.com/viscosityna/scrumtime-cli). All Viscosity org members should have it; if you don't, ping `@MarcoVNA`.
 
 ## Install
 
+Two paths:
+
+### A. Download a prebuilt binary (no Node needed)
+
+Head to **[Releases](https://github.com/viscosityna/scrumtime-cli/releases/latest)** → Assets, grab the one for your OS:
+
+| | |
+|---|---|
+| Windows | `scrum-win-x64.exe` |
+| macOS (Apple Silicon) | `scrum-macos-arm64` |
+| macOS (Intel) | `scrum-macos-x64` |
+| Linux | `scrum-linux-x64` |
+
+Rename to `scrum` (or `scrum.exe` on Windows), drop it somewhere on your `PATH`, make it executable on macOS/Linux (`chmod +x scrum`).
+
+On **macOS**, first run will trigger Gatekeeper; right-click → Open → "Open anyway" once. After that it runs normally.
+
+### B. From source (if you have Node 20+ or want to contribute)
+
 ```
-git clone https://github.com/Markuspg1/scrumtime-cli.git
+git clone https://github.com/viscosityna/scrumtime-cli.git
 cd scrumtime-cli
 npm install
 npm run build
-npm link            # exposes `scrum` globally on this machine
+npm link            # exposes `scrum` globally
 ```
-
-(`npm link` requires permission to write to your global `node_modules`. If you'd rather not, run via `node dist/index.js …` from inside the cloned directory.)
 
 ## First-run
 
@@ -107,4 +123,4 @@ The CLI does an OAuth2 authorization-code + PKCE flow against your Microsoft Ent
 
 ## Report bugs / feedback
 
-File an issue at https://github.com/Markuspg1/scrumtime-cli/issues, or message Marco directly.
+File an issue at https://github.com/viscosityna/scrumtime-cli/issues, or message `@MarcoVNA` on Slack/Teams.

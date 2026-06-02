@@ -1,0 +1,136 @@
+name: release
+
+# Triggered by pushing a tag like v0.1.0. The release notes pull from the
+# matching CHANGELOG entry if present.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write  # needed to create GitHub Releases
+
+jobs:
+  build:
+    name: build ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: scrum-win-x64.exe
+            sea_segment: ''
+          - os: macos-latest          # Apple Silicon
+            target: scrum-macos-arm64
+            sea_segment: '--macho-segment-name NODE_SEA'
+          - os: macos-13              # Intel
+            target: scrum-macos-x64
+            sea_segment: '--macho-segment-name NODE_SEA'
+          - os: ubuntu-latest
+            target: scrum-linux-x64
+            sea_segment: ''
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: install
+        run: npm ci
+
+      - name: bundle the CLI into a single CommonJS file
+        run: npx esbuild src/index.ts
+              --bundle
+              --platform=node
+              --target=node22
+              --format=cjs
+              --outfile=dist/scrum.cjs
+
+      - name: write SEA config
+        shell: bash
+        run: |
+          cat > sea-config.json <<JSON
+          {
+            "main": "dist/scrum.cjs",
+            "output": "dist/scrum.blob",
+            "disableExperimentalSEAWarning": true
+          }
+          JSON
+
+      - name: generate SEA blob
+        run: node --experimental-sea-config sea-config.json
+
+      - name: copy node binary as target (unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cp "$(node -p 'process.execPath')" "${{ matrix.target }}"
+          chmod +x "${{ matrix.target }}"
+
+      - name: copy node binary as target (windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $node = (Get-Command node).Path
+          Copy-Item $node "${{ matrix.target }}"
+
+      - name: remove macOS signature (so postject can inject)
+        if: startsWith(matrix.os, 'macos')
+        run: codesign --remove-signature "${{ matrix.target }}"
+
+      - name: inject SEA blob via postject
+        shell: bash
+        run: |
+          npx postject "${{ matrix.target }}" NODE_SEA_BLOB dist/scrum.blob \
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 \
+            ${{ matrix.sea_segment }}
+
+      - name: re-sign on macOS (ad-hoc; works for internal distribution)
+        if: startsWith(matrix.os, 'macos')
+        run: codesign --sign - "${{ matrix.target }}"
+
+      - name: smoke test (the binary should at least respond to --version)
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            ./${{ matrix.target }} --version
+          else
+            ./${{ matrix.target }} --version
+          fi
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: ${{ matrix.target }}
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: publish github release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: gather artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: list what we collected
+        run: ls -la artifacts/
+
+      - name: publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/scrum-win-x64.exe
+            artifacts/scrum-macos-arm64
+            artifacts/scrum-macos-x64
+            artifacts/scrum-linux-x64
+          generate_release_notes: true
+          fail_on_unmatched_files: true
