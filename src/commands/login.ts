@@ -12,12 +12,15 @@ export async function loginCommand(_opts: unknown) {
     console.log(kleur.green(`signed in as ${me.username} — role: ${me.role}`));
   } catch (err) {
     if (err instanceof ApiError && err.status === 403) {
-      console.error(kleur.red('Microsoft sign-in succeeded, but you do not have access to scrumtime.'));
-      console.error('');
-      console.error('Ask the scrumtime admin to assign you the "scrumtime user" app role:');
-      console.error('  Entra → Enterprise applications → scrumtime API → Users and groups → + Add user');
-      console.error('');
+      console.error(kleur.red('Microsoft sign-in succeeded, but your account is not allowed to use scrumtime.'));
+      console.error('Only viscosityna.com accounts are accepted.');
       console.error(kleur.dim(`(server: ${err.detail ?? 'Forbidden'})`));
+      process.exit(1);
+    }
+    if (err instanceof ApiError && err.status === 404) {
+      console.error(kleur.red('Microsoft sign-in succeeded, but no scrumtime employee record was found for your account.'));
+      console.error('If you should have access, ask the scrumtime admin to confirm your employee record exists.');
+      console.error(kleur.dim('(scrumtime looks you up by your viscosityna.com email; if your email recently changed, that may be the cause.)'));
       process.exit(1);
     }
     throw err;

@@ -26,9 +26,8 @@ logged 1.5h on 2026-06-02 (id 190104)
 ## Prerequisites
 
 - **Node.js 20+** ([download](https://nodejs.org/)).
-- **A Viscosity Microsoft account** that's been assigned the `scrumtime user` app role.
-  Ask Marco (or whoever holds the "scrumtime API" Entra app registration) to add you under
-  *Entra → Enterprise applications → scrumtime API → Users and groups*. Without this, sign-in succeeds but every API call returns 403.
+- **A Viscosity Microsoft account** (any `@viscosityna.com` account works — no per-user role assignment needed).
+  You also need a scrumtime employee record under your `@viscosityna.com` email; if you've never logged into scrumtime via the web app, you may not have one yet — message the scrumtime admin.
 - **GitHub access** to the [private repo](https://github.com/Markuspg1/scrumtime-cli) (ask Marco).
 
 ## Install
@@ -58,7 +57,7 @@ signed in as YOURUSERNAME — role: self
 
 `role` will be `self`, `manager` (if you appear as PM/owner/account on any project), or `admin`.
 
-If you instead see *"Microsoft sign-in succeeded, but you do not have access to scrumtime"* — the role hasn't been assigned yet. Send the message to the scrumtime admin.
+If you see *"no scrumtime employee record was found for your account"* — you signed in fine, you just don't have an employee row under your `@viscosityna.com` email in scrumtime. Message the scrumtime admin to confirm your record. (If you only see *"Only viscosityna.com accounts are accepted"*, you signed in with a personal Microsoft account instead of your work account.)
 
 ## Common commands
 
@@ -99,7 +98,8 @@ The CLI does an OAuth2 authorization-code + PKCE flow against your Microsoft Ent
 
 | Symptom | What to try |
 |---|---|
-| `scrum login` → "Microsoft sign-in succeeded, but you do not have access" | The `scrumtime user` app role isn't assigned to you yet. Message the scrumtime admin. |
+| `scrum login` → "no scrumtime employee record was found" | Your `@viscosityna.com` email isn't in `SCT_EMPLOYEES`. Message the scrumtime admin. |
+| `scrum login` → "Only viscosityna.com accounts are accepted" | You signed in with a personal Microsoft account; use your work account instead. |
 | `scrum login` browser doesn't open | Copy the URL from the terminal and paste it into a browser. The local listener will still catch the redirect. |
 | `GET /me → 401 Unauthorized` after some time | Tokens may have expired. Run `scrum logout && scrum login` to refresh. |
 | `scrum time log` returns `403 you are not a resource on this task's project` | You're not assigned as a resource on the project the task belongs to. Have your PM add you in scrumtime. |
