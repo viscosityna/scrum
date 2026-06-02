@@ -97,10 +97,12 @@ export const api = {
   me: () => request<Employee>('GET', '/me'),
 
   projects(params: { mine?: boolean; active?: boolean; q?: string; abbr?: string } = {}) {
+    // ORDS reserves the `q` query parameter for its own JSON-filter syntax, so
+    // we send our name-substring filter as `search=`. CLI flag stays `-q`.
     const qs = new URLSearchParams();
     if (params.mine) qs.set('mine', '1');
     if (params.active) qs.set('active', '1');
-    if (params.q) qs.set('q', params.q);
+    if (params.q) qs.set('search', params.q);
     if (params.abbr) qs.set('abbr', params.abbr);
     const suffix = qs.toString() ? `?${qs}` : '';
     return request<CollectionEnvelope<Project>>('GET', `/projects${suffix}`);
