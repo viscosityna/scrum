@@ -21,11 +21,8 @@ jobs:
           - os: windows-latest
             target: scrum-win-x64.exe
             sea_segment: ''
-          - os: macos-latest          # Apple Silicon
+          - os: macos-latest          # Apple Silicon — Intel Macs run this via Rosetta 2
             target: scrum-macos-arm64
-            sea_segment: '--macho-segment-name NODE_SEA'
-          - os: macos-13              # Intel
-            target: scrum-macos-x64
             sea_segment: '--macho-segment-name NODE_SEA'
           - os: ubuntu-latest
             target: scrum-linux-x64
@@ -130,7 +127,6 @@ jobs:
           files: |
             artifacts/scrum-win-x64.exe
             artifacts/scrum-macos-arm64
-            artifacts/scrum-macos-x64
             artifacts/scrum-linux-x64
           generate_release_notes: true
           fail_on_unmatched_files: true

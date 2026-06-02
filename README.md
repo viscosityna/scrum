@@ -31,24 +31,23 @@ logged 1.5h on 2026-06-02 (id 190104)
 
 ## Install
 
-Two paths:
+**macOS / Linux** (paste in a terminal):
 
-### A. Download a prebuilt binary (no Node needed)
+```sh
+curl -fsSL https://raw.githubusercontent.com/viscosityna/scrumtime-cli/main/install.sh | sh
+```
 
-Head to **[Releases](https://github.com/viscosityna/scrumtime-cli/releases/latest)** → Assets, grab the one for your OS:
+**Windows** (paste in PowerShell):
 
-| | |
-|---|---|
-| Windows | `scrum-win-x64.exe` |
-| macOS (Apple Silicon) | `scrum-macos-arm64` |
-| macOS (Intel) | `scrum-macos-x64` |
-| Linux | `scrum-linux-x64` |
+```powershell
+iwr -useb https://raw.githubusercontent.com/viscosityna/scrumtime-cli/main/install.ps1 | iex
+```
 
-Rename to `scrum` (or `scrum.exe` on Windows), drop it somewhere on your `PATH`, make it executable on macOS/Linux (`chmod +x scrum`).
+Both scripts download the right binary for your machine, drop it at `~/.scrum/bin/scrum` (or `%USERPROFILE%\.scrum\bin\scrum.exe`), add that dir to your `PATH`, and clear the macOS quarantine flag so first run doesn't bounce against Gatekeeper. Total: ~5 seconds.
 
-On **macOS**, first run will trigger Gatekeeper; right-click → Open → "Open anyway" once. After that it runs normally.
+After it finishes, open a new terminal and run `scrum login`.
 
-### B. From source (if you have Node 20+ or want to contribute)
+### From source (contributors / Node 20+ users)
 
 ```
 git clone https://github.com/viscosityna/scrumtime-cli.git
