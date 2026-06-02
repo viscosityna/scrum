@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import kleur from 'kleur';
+import pkg from '../package.json' with { type: 'json' };
 import { ApiError } from './api.js';
 import { loginCommand, logoutCommand, configCommand } from './commands/login.js';
 import { meCommand } from './commands/me.js';
@@ -15,7 +16,7 @@ const program = new Command();
 program
   .name('scrum')
   .description('CLI for scrumtime (Viscosity NA timesheet/project app)')
-  .version('0.0.1');
+  .version(pkg.version);
 
 program
   .command('login')
