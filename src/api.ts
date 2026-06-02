@@ -120,9 +120,10 @@ export const api = {
     request<CollectionEnvelope<Task>>('GET', `/projects/${projectId}/tasks`),
 
   timesheets(params: { from?: string; to?: string; project_id?: number; task_id?: number } = {}) {
+    // Server-side bind names use dt_from / dt_to (avoiding the SQL keyword `from`).
     const qs = new URLSearchParams();
-    if (params.from) qs.set('from', params.from);
-    if (params.to) qs.set('to', params.to);
+    if (params.from) qs.set('dt_from', params.from);
+    if (params.to) qs.set('dt_to', params.to);
     if (params.project_id) qs.set('project_id', String(params.project_id));
     if (params.task_id) qs.set('task_id', String(params.task_id));
     const suffix = qs.toString() ? `?${qs}` : '';
