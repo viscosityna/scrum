@@ -1,7 +1,7 @@
 # scrum CLI installer for Windows.
 #
 # Usage (PowerShell):
-#   iwr -useb https://raw.githubusercontent.com/viscosityna/scrumtime-cli/main/install.ps1 | iex
+#   iwr -useb https://raw.githubusercontent.com/viscosityna/scrum/main/install.ps1 | iex
 #
 # Honours these env vars (rarely needed):
 #   SCRUM_INSTALL_DIR  override install location (default: %USERPROFILE%\.scrum\bin)
@@ -9,7 +9,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$Repo       = 'viscosityna/scrumtime-cli'
+$Repo       = 'viscosityna/scrum'
 $InstallDir = if ($env:SCRUM_INSTALL_DIR) { $env:SCRUM_INSTALL_DIR } else { Join-Path $env:USERPROFILE '.scrum\bin' }
 $ExePath    = Join-Path $InstallDir 'scrum.exe'
 $Asset      = 'scrum-win-x64.exe'

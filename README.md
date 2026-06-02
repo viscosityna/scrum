@@ -27,20 +27,20 @@ logged 1.5h on 2026-06-02 (id 190104)
 
 - **A Viscosity Microsoft account.** Any `@viscosityna.com` Microsoft sign-in works — no per-user role setup.
   You also need a scrumtime employee record under your `@viscosityna.com` email; if you've never been logged into scrumtime, you may not have one yet — message the scrumtime admin.
-- **GitHub access** to [`viscosityna/scrumtime-cli`](https://github.com/viscosityna/scrumtime-cli). All Viscosity org members should have it; if you don't, ping `@MarcoVNA`.
+- **GitHub access** to [`viscosityna/scrum`](https://github.com/viscosityna/scrum). All Viscosity org members should have it; if you don't, ping `@MarcoVNA`.
 
 ## Install
 
 **macOS / Linux** (paste in a terminal):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/viscosityna/scrumtime-cli/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/viscosityna/scrum/main/install.sh | sh
 ```
 
 **Windows** (paste in PowerShell):
 
 ```powershell
-iwr -useb https://raw.githubusercontent.com/viscosityna/scrumtime-cli/main/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/viscosityna/scrum/main/install.ps1 | iex
 ```
 
 Both scripts download the right binary for your machine, drop it at `~/.scrum/bin/scrum` (or `%USERPROFILE%\.scrum\bin\scrum.exe`), add that dir to your `PATH`, and clear the macOS quarantine flag so first run doesn't bounce against Gatekeeper. Total: ~5 seconds.
@@ -50,7 +50,7 @@ After it finishes, open a new terminal and run `scrum login`.
 ### From source (contributors / Node 20+ users)
 
 ```
-git clone https://github.com/viscosityna/scrumtime-cli.git
+git clone https://github.com/viscosityna/scrum.git
 cd scrumtime-cli
 npm install
 npm run build
@@ -122,4 +122,4 @@ The CLI does an OAuth2 authorization-code + PKCE flow against your Microsoft Ent
 
 ## Report bugs / feedback
 
-File an issue at https://github.com/viscosityna/scrumtime-cli/issues, or message `@MarcoVNA` on Slack/Teams.
+File an issue at https://github.com/viscosityna/scrum/issues, or message `@MarcoVNA` on Slack/Teams.

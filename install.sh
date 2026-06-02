@@ -2,7 +2,7 @@
 # scrum CLI installer for macOS and Linux.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/viscosityna/scrumtime-cli/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/viscosityna/scrum/main/install.sh | sh
 #
 # Honours these env vars (rarely needed):
 #   SCRUM_INSTALL_DIR  override install location (default: ~/.scrum/bin)
@@ -10,7 +10,7 @@
 
 set -e
 
-REPO="viscosityna/scrumtime-cli"
+REPO="viscosityna/scrum"
 INSTALL_DIR="${SCRUM_INSTALL_DIR:-$HOME/.scrum/bin}"
 
 # ----- detect OS + arch -----
