@@ -51,7 +51,7 @@ export async function timeListCommand(opts: {
   }
 }
 
-export async function timeLogCommand(args: { project: string; task: string; hours: string; note?: string }) {
+export async function timeLogCommand(args: { project: string; task: string; hours: string; note?: string; date?: string }) {
   const project = await api.project(args.project);
 
   const taskId = /^\d+$/.test(args.task)
@@ -62,11 +62,16 @@ export async function timeLogCommand(args: { project: string; task: string; hour
     console.error(kleur.red(`invalid hours: ${args.hours}`));
     process.exit(2);
   }
+  const date = args.date ?? today();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    console.error(kleur.red(`invalid --date "${date}"; expected YYYY-MM-DD`));
+    process.exit(2);
+  }
 
   const entry = await api.logTime({
     task_id: taskId,
     hours,
-    input_date: today(),
+    input_date: date,
     notes: args.note,
   });
   console.log(kleur.green(`logged ${hours}h on ${entry.date} (id ${entry.id})`));

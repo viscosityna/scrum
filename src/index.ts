@@ -72,9 +72,10 @@ time
 
 time
   .command('log <project> <task> <hours>')
-  .description('log time on a task today')
+  .description('log time on a task (today by default; use -d for a different date)')
   .option('-n, --note <note>', 'add notes')
-  .action((project, task, hours, opts) => timeLogCommand({ project, task, hours, note: opts.note }));
+  .option('-d, --date <YYYY-MM-DD>', 'log on this date instead of today')
+  .action((project, task, hours, opts) => timeLogCommand({ project, task, hours, note: opts.note, date: opts.date }));
 
 time
   .command('delete <id>')
