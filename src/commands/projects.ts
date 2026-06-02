@@ -1,10 +1,10 @@
 import kleur from 'kleur';
 import { api } from '../api.js';
 
-export async function projectsCommand(opts: { all?: boolean; active?: boolean; q?: string; json?: boolean }) {
+export async function projectsCommand(opts: { all?: boolean; includeClosed?: boolean; q?: string; json?: boolean }) {
   const env = await api.projects({
     mine: !opts.all,
-    active: opts.active === true,
+    active: !opts.includeClosed,   // default: active only; --include-closed widens
     q: opts.q,
   });
   if (opts.json) {

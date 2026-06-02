@@ -79,9 +79,9 @@ If you see *"no scrumtime employee record was found for your account"* — you s
 | | |
 |---|---|
 | `scrum me` | show your employee row + current role |
-| `scrum projects` | projects you're a resource on |
-| `scrum projects --all` | all projects you can see |
-| `scrum projects --active` | filter to active status |
+| `scrum projects` | YOUR active projects (default = mine + active) |
+| `scrum projects --all` | every active project you can see |
+| `scrum projects --include-closed` | also show closed / inactive projects |
 | `scrum projects -q PARTIAL` | search by name |
 | `scrum project <ABBR>` | show one project |
 | `scrum tasks <ABBR>` | list tasks on a project |

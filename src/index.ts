@@ -37,9 +37,9 @@ program
 
 program
   .command('projects')
-  .description('list projects')
+  .description('list YOUR active projects')
   .option('-a, --all', 'show all visible projects (default: only those you are a resource on)')
-  .option('--active', 'filter to status=active (status IDs are TODO in the SQL handler)')
+  .option('--include-closed', 'include closed / inactive projects (default: active only)')
   .option('-q <query>', 'filter by name substring')
   .option('--json', 'output JSON')
   .action(projectsCommand);
