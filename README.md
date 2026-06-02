@@ -1,6 +1,4 @@
-# scrum
-
-Command-line client for [scrumtime](https://apps.viscosityna.com/ords/f?p=112), Viscosity NA's internal timesheet/project app.
+# scrum — command line for scrumtime
 
 ```
 $ scrum me
@@ -9,117 +7,120 @@ MPEREIRA  (Marco Pereira)
   role:      manager
   pto hours: 82
 
-$ scrum projects
-AMP      AMP Support
-INTERN   Internal
-MS       Managed Services
-...
-
 $ scrum time
 2026-06-01 → 2026-06-02  (2 entries, 16.00h)
-  2026-06-02      8h  task#6008  Started implementing remedial action subtype...
+  2026-06-02      8h  task#6008  ...
 
 $ scrum time log INTERN 4023 1.5 -n "weekly team sync"
 logged 1.5h on 2026-06-02 (id 190104)
 ```
 
-## Prerequisites
+---
 
-- **A Viscosity Microsoft account.** Any `@viscosityna.com` Microsoft sign-in works — no per-user role setup.
-  You also need a scrumtime employee record under your `@viscosityna.com` email; if you've never been logged into scrumtime, you may not have one yet — message the scrumtime admin.
-- **GitHub access** to [`viscosityna/scrum`](https://github.com/viscosityna/scrum). All Viscosity org members should have it; if you don't, ping `@MarcoVNA`.
+## ⚡ Install in 30 seconds
 
-## Install
+**You don't need to clone this repo. You don't need Node. Just paste the command for your OS in a terminal.**
 
-**macOS / Linux** (paste in a terminal):
+### macOS / Linux (Terminal):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/viscosityna/scrum/main/install.sh | sh
 ```
 
-**Windows** (paste in PowerShell):
+### Windows (PowerShell):
 
 ```powershell
 iwr -useb https://raw.githubusercontent.com/viscosityna/scrum/main/install.ps1 | iex
 ```
 
-Both scripts download the right binary for your machine, drop it at `~/.scrum/bin/scrum` (or `%USERPROFILE%\.scrum\bin\scrum.exe`), add that dir to your `PATH`, and clear the macOS quarantine flag so first run doesn't bounce against Gatekeeper. Total: ~5 seconds.
+> The script downloads the right binary for your machine, drops it in `~/.scrum/bin/scrum` (Windows: `%USERPROFILE%\.scrum\bin\scrum.exe`), adds that folder to your PATH, and clears macOS's quarantine flag so Gatekeeper doesn't bounce the first run. Total: ~5 seconds, no admin rights needed.
 
-After it finishes, open a new terminal and run `scrum login`.
-
-### From source (contributors / Node 20+ users)
-
-```
-git clone https://github.com/viscosityna/scrum.git
-cd scrumtime-cli
-npm install
-npm run build
-npm link            # exposes `scrum` globally
-```
-
-## First-run
+**After it finishes**, open a **new** terminal (so PATH refreshes) and run:
 
 ```
 scrum login
 ```
 
-Your default browser opens at Microsoft's sign-in page. If you're already signed into Microsoft 365 in that browser, sign-in is silent and you'll be redirected straight back to a `localhost` page that says "Signed in." Otherwise complete the Microsoft prompt as usual.
+A browser opens for Viscosity Microsoft sign-in. After that you're in.
 
-Expected terminal output:
-```
-signed in as YOURUSERNAME — role: self
-```
+---
 
-`role` will be `self`, `manager` (if you appear as PM/owner/account on any project), or `admin`.
+## What you need
 
-If you see *"no scrumtime employee record was found for your account"* — you signed in fine, you just don't have an employee row under your `@viscosityna.com` email in scrumtime. Message the scrumtime admin to confirm your record. (If you only see *"Only viscosityna.com accounts are accepted"*, you signed in with a personal Microsoft account instead of your work account.)
+- A Viscosity Microsoft account (`@viscosityna.com`). No per-user setup needed; just sign in.
+- A scrumtime employee record under your `@viscosityna.com` email. (If you've used scrumtime in the web before, you have one.)
 
-## Common commands
+If sign-in succeeds but `scrum me` says "no scrumtime employee record was found", ping `@MarcoVNA` on Teams — your email may not match an existing record.
+
+---
+
+## What scrum can do
 
 | | |
 |---|---|
-| `scrum me` | show your employee row + current role |
-| `scrum projects` | YOUR active projects (default = mine + active) |
+| `scrum me` | your employee row + role (self/manager/admin) |
+| `scrum projects` | **your active projects** |
 | `scrum projects --all` | every active project you can see |
-| `scrum projects --include-closed` | also show closed / inactive projects |
+| `scrum projects --include-closed` | also show closed/inactive projects |
 | `scrum projects -q PARTIAL` | search by name |
-| `scrum project <ABBR>` | show one project |
-| `scrum tasks <ABBR>` | list tasks on a project |
+| `scrum project <ABBR>` | details for one project |
+| `scrum tasks <ABBR>` | tasks on a project |
 | `scrum time` | your last 14 days of entries |
-| `scrum time -d 2026-06-01` | one day's entries |
+| `scrum time -d 2026-06-01` | one day |
 | `scrum time --from 2026-05-01 --to 2026-05-31` | a date range |
 | `scrum time log <ABBR> <task_id> <hours> -n "note"` | log time today |
-| `scrum time delete <id>` | delete a time entry of yours |
+| `scrum time delete <id>` | delete one of your entries |
 | `scrum pto` | PTO balance + anniversary |
 | `scrum logout` | clear cached tokens |
-| `scrum config` | show current CLI configuration |
+| `scrum update` | check for a newer release |
+| `scrum config` | show current CLI config |
 
 Add `--json` to most commands for machine-readable output.
 
-## Where your data lives
+---
 
-- **Tokens** (Microsoft access + refresh tokens) cache in a per-user config file:
-  - Windows — `%APPDATA%\scrumtime-nodejs\tokens.json`
-  - macOS — `~/Library/Preferences/scrumtime-nodejs/tokens.json`
-  - Linux — `~/.config/scrumtime-nodejs/tokens.json`
-- **CLI config** (your username) sits in `config.json` in the same dir.
-- **No password is ever stored** — you authenticate against Microsoft directly.
+## Updating
 
-## How auth works (one paragraph)
+```sh
+scrum update
+```
 
-The CLI does an OAuth2 authorization-code + PKCE flow against your Microsoft Entra tenant. The access token Microsoft issues is sent to a small Cloudflare Worker (`scrumtime-api.devops-1e0.workers.dev`) that validates it against Microsoft's public keys, then forwards your request to the scrumtime ORDS API with a short-lived shared bearer token — so your identity flows through to the SQL handlers, but no per-user secret ever lives on your laptop or in transit. See [internal/scrumtime/ARCHITECTURE.md](https://github.com/Markuspg1/internal/blob/main/scrumtime/ARCHITECTURE.md) in the ops repo for the full picture.
+That prints the latest version and, if newer, the exact command to update (which is just re-running the install one-liner above). Idempotent — overwrites the binary in place.
+
+---
 
 ## Troubleshooting
 
 | Symptom | What to try |
 |---|---|
-| `scrum login` → "no scrumtime employee record was found" | Your `@viscosityna.com` email isn't in `SCT_EMPLOYEES`. Message the scrumtime admin. |
-| `scrum login` → "Only viscosityna.com accounts are accepted" | You signed in with a personal Microsoft account; use your work account instead. |
-| `scrum login` browser doesn't open | Copy the URL from the terminal and paste it into a browser. The local listener will still catch the redirect. |
-| `GET /me → 401 Unauthorized` after some time | Tokens may have expired. Run `scrum logout && scrum login` to refresh. |
-| `scrum time log` returns `403 you are not a resource on this task's project` | You're not assigned as a resource on the project the task belongs to. Have your PM add you in scrumtime. |
-| Anything else | `scrum debug token` shows you the current Microsoft token's claims (without printing the token itself). |
+| `scrum: command not found` after install | Open a **new** terminal window (the install script added `~/.scrum/bin` to your PATH for new shells). On macOS, run `source ~/.zshrc` (or `~/.bashrc`) in the same terminal. |
+| `scrum login` → "no scrumtime employee record was found" | Your `@viscosityna.com` email isn't in scrumtime. Ping `@MarcoVNA`. |
+| `scrum login` → "Only viscosityna.com accounts are accepted" | You signed in with a personal Microsoft account instead of your work one. |
+| `scrum time log` → "you are not a resource on this task's project" | You're not assigned to that project in scrumtime. Have your PM add you. |
+| Anything else | `scrum debug token` shows what the server sees about your identity (no secrets in the output). |
 
-## Report bugs / feedback
+---
 
-File an issue at https://github.com/viscosityna/scrum/issues, or message `@MarcoVNA` on Slack/Teams.
+## Where things live
+
+- **Tokens** (Microsoft access + refresh tokens) cache in a per-user config file:
+  - Windows — `%APPDATA%\scrumtime-nodejs\tokens.json`
+  - macOS — `~/Library/Preferences/scrumtime-nodejs/tokens.json`
+  - Linux — `~/.config/scrumtime-nodejs/tokens.json`
+- **No password is ever stored** — you authenticate against Microsoft directly.
+
+---
+
+## For contributors only (rest of you can stop reading)
+
+```
+git clone https://github.com/viscosityna/scrum.git
+cd scrum
+npm install
+npm run build
+npm link
+```
+
+How auth works under the hood: the CLI does Microsoft Entra OAuth2 (auth-code + PKCE), sends the access token to a Cloudflare Worker BFF that validates it and exchanges it for an ORDS bearer, then forwards to the scrumtime ORDS API with the validated UPN as a `?upn=` param. See [internal/scrumtime/ARCHITECTURE.md](https://github.com/Markuspg1/internal/blob/main/scrumtime/ARCHITECTURE.md) (Viscosity-internal repo) for the full picture.
+
+Report bugs at https://github.com/viscosityna/scrum/issues, or ping `@MarcoVNA` on Teams.

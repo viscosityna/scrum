@@ -8,6 +8,7 @@ import { projectsCommand, projectCommand, tasksCommand } from './commands/projec
 import { timeListCommand, timeLogCommand, timeDeleteCommand } from './commands/time.js';
 import { debugTokenCommand } from './commands/debug.js';
 import { ptoCommand } from './commands/pto.js';
+import { updateCommand } from './commands/update.js';
 
 const program = new Command();
 
@@ -84,6 +85,12 @@ program
   .description('show your PTO balance')
   .option('--json', 'output JSON')
   .action(ptoCommand);
+
+program
+  .command('update')
+  .description('check for a newer version (prints the command to update)')
+  .option('--json', 'output JSON')
+  .action(updateCommand);
 
 const debug = program.command('debug').description('debugging helpers');
 debug
