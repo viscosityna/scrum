@@ -20,15 +20,21 @@ jobs:
         include:
           - os: windows-latest
             target: scrum-win-x64.exe
+            node_arch: 'x64'
             sea_segment: ''
-          - os: macos-latest          # Apple Silicon runner (arm64)
+          - os: macos-latest          # Apple Silicon runner builds the arm64 binary natively
             target: scrum-macos-arm64
+            node_arch: 'arm64'
             sea_segment: '--macho-segment-name NODE_SEA'
-          - os: macos-13              # Intel runner (x86_64) — Rosetta only goes ARM→Intel, not the reverse
+          - os: macos-latest          # Apple Silicon runner cross-builds the x64 binary by hosting
+                                      # a darwin-x64 Node (runs under Rosetta); the SEA target is
+                                      # therefore an x64 binary that loads natively on Intel Macs.
             target: scrum-macos-x64
+            node_arch: 'x64'
             sea_segment: '--macho-segment-name NODE_SEA'
           - os: ubuntu-latest
             target: scrum-linux-x64
+            node_arch: 'x64'
             sea_segment: ''
     runs-on: ${{ matrix.os }}
     steps:
@@ -37,6 +43,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          architecture: ${{ matrix.node_arch }}
 
       - name: install
         run: npm ci
