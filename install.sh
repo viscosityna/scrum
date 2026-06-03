@@ -16,10 +16,20 @@ INSTALL_DIR="${SCRUM_INSTALL_DIR:-$HOME/.scrum/bin}"
 # ----- detect OS + arch -----
 case "$(uname -s)" in
   Darwin)
-    case "$(uname -m)" in
+    # Rosetta 2 lets Apple Silicon Macs run x86_64 binaries — not the other
+    # way around. So `uname -m` is x86_64 in two distinct cases on macOS:
+    #   1) a real Intel Mac (we want scrum-macos-x64)
+    #   2) Apple Silicon Mac running this script inside a Rosetta shell
+    #      (we still want the arm64 binary — it runs natively)
+    # sysctl.proc_translated == 1 disambiguates case (2).
+    MAC_ARCH="$(uname -m)"
+    if [ "$MAC_ARCH" = "x86_64" ] && [ "$(sysctl -n sysctl.proc_translated 2>/dev/null)" = "1" ]; then
+      MAC_ARCH="arm64"
+    fi
+    case "$MAC_ARCH" in
       arm64)  ASSET="scrum-macos-arm64" ;;
-      x86_64) ASSET="scrum-macos-arm64" ;;  # Intel Macs run arm64 via Rosetta 2
-      *)      echo "scrum: unsupported macOS arch: $(uname -m)" >&2; exit 1 ;;
+      x86_64) ASSET="scrum-macos-x64"   ;;
+      *)      echo "scrum: unsupported macOS arch: $MAC_ARCH" >&2; exit 1 ;;
     esac ;;
   Linux)
     case "$(uname -m)" in
