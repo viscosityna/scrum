@@ -48,6 +48,18 @@ jobs:
       - name: install
         run: npm ci
 
+      - name: bake tag version into package.json
+        # The bundled binary reads its version from package.json at runtime.
+        # Without this step, every release would ship a binary whose
+        # --version reports whatever was last hand-committed in main.
+        # GITHUB_REF_NAME on a tag push is e.g. "v0.1.10" — strip the "v".
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Baking version $VERSION into package.json"
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.version='$VERSION';fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+          grep -E '"version"' package.json
+
       - name: bundle the CLI into a single CommonJS file
         run: npx esbuild src/index.ts
               --bundle
