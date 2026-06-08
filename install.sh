@@ -61,7 +61,10 @@ chmod +x "$INSTALL_DIR/scrum"
 # release workflow ships a checksums.txt alongside the binaries with one
 # "<sha256>  <filename>" line per asset.
 CHECKSUM_URL="$(echo "$URL" | sed "s|/$ASSET\$|/checksums.txt|")"
-EXPECTED="$(curl -fsSL "$CHECKSUM_URL" 2>/dev/null | awk -v f="$ASSET" '$2 == f { print $1 }')"
+# tr -d '\r' tolerates CRLF lines that the Windows build runner may
+# contribute to the concatenated checksums.txt — otherwise the awk
+# field comparison sees "scrum-win-x64.exe\r" and never matches.
+EXPECTED="$(curl -fsSL "$CHECKSUM_URL" 2>/dev/null | tr -d '\r' | awk -v f="$ASSET" '$2 == f { print $1 }')"
 if [ -z "$EXPECTED" ]; then
   echo "scrum: could not retrieve checksum for $ASSET from $CHECKSUM_URL" >&2
   echo "scrum: refusing to install an unverified binary" >&2

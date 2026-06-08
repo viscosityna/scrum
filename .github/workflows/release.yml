@@ -139,10 +139,12 @@ jobs:
           $hash = (Get-FileHash -Path "${{ matrix.target }}" -Algorithm SHA256).Hash.ToLower()
           # Match the sha256sum-style "<hash>  <filename>" line so the
           # install scripts can parse a single checksums.txt format.
-          "$hash  ${{ matrix.target }}" | Out-File -FilePath "${{ matrix.target }}.sha256" -Encoding ascii -NoNewline
-          # Out-File on PowerShell 5 strips no newline by default, but the
-          # release job concatenates files so ensure a trailing newline.
-          Add-Content -Path "${{ matrix.target }}.sha256" -Value ""
+          # Use [IO.File]::WriteAllText with explicit LF so the line
+          # doesn't get CRLF-translated by PowerShell's StreamWriter —
+          # checksums.txt concatenates all four .sha256 files and any
+          # stray CRLF on the Windows line breaks the field comparison
+          # in install scripts that parse it as text.
+          [IO.File]::WriteAllText("${{ matrix.target }}.sha256", "$hash  ${{ matrix.target }}`n")
           Get-Content "${{ matrix.target }}.sha256"
 
       - name: upload artifact

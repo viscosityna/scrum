@@ -32,17 +32,28 @@ try {
 }
 
 # ----- verify integrity (SHA256 against the release's checksums.txt) -----
+# GitHub Releases serves checksums.txt with Content-Type
+# application/octet-stream, so Invoke-WebRequest -UseBasicParsing returns
+# .Content as a byte[] rather than a string. Convert explicitly. Then
+# tolerate CRLF on the line that came from the Windows build runner.
 $ChecksumUrl = $Url -replace "/$Asset$", '/checksums.txt'
 try {
-  $ChecksumText = (Invoke-WebRequest -Uri $ChecksumUrl -UseBasicParsing).Content
+  $Response = Invoke-WebRequest -Uri $ChecksumUrl -UseBasicParsing
+  $ChecksumText = if ($Response.Content -is [byte[]]) {
+    [System.Text.Encoding]::UTF8.GetString($Response.Content)
+  } else {
+    [string]$Response.Content
+  }
 } catch {
   Remove-Item $ExePath -ErrorAction SilentlyContinue
   Write-Error "scrum: could not retrieve checksum for $Asset from $ChecksumUrl. Refusing to install an unverified binary."
   exit 1
 }
 $Expected = $null
-foreach ($line in ($ChecksumText -split "`n")) {
-  $parts = ($line.Trim() -split '\s+')
+foreach ($line in ($ChecksumText -split "`r?`n")) {
+  $line = $line.Trim()
+  if (-not $line) { continue }
+  $parts = $line -split '\s+', 2
   if ($parts.Length -ge 2 -and $parts[1] -eq $Asset) {
     $Expected = $parts[0].ToLower()
     break
