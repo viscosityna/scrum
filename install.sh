@@ -83,6 +83,7 @@ if [ "$EXPECTED" != "$ACTUAL" ]; then
   rm -f "$INSTALL_DIR/scrum"
   exit 1
 fi
+echo "scrum: integrity verified (SHA256 matches checksums.txt)."
 
 # clear macOS Gatekeeper quarantine flag so first run doesn't prompt
 if [ "$(uname -s)" = "Darwin" ]; then

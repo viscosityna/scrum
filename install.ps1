@@ -70,6 +70,7 @@ if ($Expected -ne $Actual) {
   Write-Error "scrum: SHA256 mismatch. Expected $Expected, got $Actual. Aborting install."
   exit 1
 }
+Write-Host "scrum: integrity verified (SHA256 matches checksums.txt)."
 
 # ----- add to PATH (user-scope, no admin needed) -----
 $UserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
