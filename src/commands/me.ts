@@ -13,6 +13,8 @@ export async function meCommand(opts: { json?: boolean }) {
   console.log(`  email:     ${me.email ?? '—'}`);
   console.log(`  title:     ${me.title ?? '—'}`);
   console.log(`  role:      ${me.role}`);
-  console.log(`  active:    ${me.is_active}`);
   console.log(`  pto hours: ${me.pto_hours}`);
+  // `is_active` is intentionally omitted from the default human view per
+  // P1.2 of cli/UPGRADES.md: if the caller reaches /me at all they are
+  // active. Field is still present in --json output above for scripting.
 }

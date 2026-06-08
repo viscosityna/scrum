@@ -28,15 +28,24 @@ export async function projectCommand(idOrAbbr: string, opts: { json?: boolean })
     process.stdout.write(JSON.stringify(p, null, 2) + '\n');
     return;
   }
+  // Prefer the *_label / *_name fields the v1 handler returns alongside the
+  // raw foreign keys (v1_projects_labels.sql). Fall back to the id with an
+  // annotation when the lookup row is missing so the human at least sees
+  // something to grep for.
+  const labelOrId = (label: unknown, id: unknown): string => {
+    if (label != null && String(label).trim().length > 0) return String(label);
+    if (id == null) return '—';
+    return `#${id}`;
+  };
   console.log(kleur.bold(`${p.project_abbr ?? p.id}  ${p.name}`));
   if (p.description) console.log(`  ${p.description}`);
   console.log(`  id:           ${p.id}`);
-  console.log(`  client_id:    ${p.client_id ?? '—'}`);
-  console.log(`  status:       ${p.status ?? '—'}`);
-  console.log(`  cycle:        ${p.project_cycle_id}`);
+  console.log(`  client:       ${labelOrId((p as any).client_name, p.client_id)}`);
+  console.log(`  status:       ${labelOrId((p as any).status_label, p.status)}`);
+  console.log(`  cycle:        ${labelOrId((p as any).cycle_label, p.project_cycle_id)}`);
   console.log(`  budget_hours: ${p.budget_hours ?? '—'}`);
-  console.log(`  manager:      ${p.project_manager_id ?? '—'}`);
-  console.log(`  owner:        ${p.project_owner_id ?? '—'}`);
+  console.log(`  manager:      ${labelOrId((p as any).manager_name, p.project_manager_id)}`);
+  console.log(`  owner:        ${labelOrId((p as any).owner_name, p.project_owner_id)}`);
 }
 
 export async function tasksCommand(idOrAbbr: string, opts: { json?: boolean }) {

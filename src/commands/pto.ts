@@ -42,5 +42,6 @@ export async function ptoCommand(opts: { json?: boolean }) {
   console.log(`  email:        ${balance.email ?? '—'}`);
   console.log(`  pto_hours:    ${kleur.bold(String(balance.pto_hours))}`);
   console.log(`  anniversary:  ${balance.anniversary ?? '—'}`);
-  console.log(`  pto_admin:    ${balance.is_pto_admin}`);
+  // `is_pto_admin` is operator metadata, omitted from the default view per
+  // P1.2 of cli/UPGRADES.md. Still present in --json output above.
 }
