@@ -1,4 +1,6 @@
 import Conf from 'conf';
+import { unlink } from 'fs/promises';
+import { setSecret, getSecret, deleteSecret } from './secure-storage.js';
 
 const TENANT_ID = '85acb3c0-1e01-4f12-ba06-e8da48f664c5';
 const CLIENT_ID = '226a442a-d10e-423a-82c4-9fa440117017';
@@ -53,36 +55,67 @@ export interface TokenSet {
 }
 
 /**
- * Tokens live in a per-user config file. On Windows the path is
- * `%APPDATA%\scrumtime-nodejs\tokens.json` with per-user ACL. On macOS/Linux
- * the equivalent XDG config dir, mode 600 by default for new files.
+ * Tokens are persisted via the OS-native data-protection API: DPAPI on
+ * Windows, Keychain on macOS, libsecret on Linux. See secure-storage.ts.
  *
- * We previously tried keytar (OS keyring), but Microsoft JWTs are large enough
- * that Windows Credential Manager rejects them with RPC_X_BAD_STUB_DATA. File
- * storage avoids that. Access tokens are short-lived; refresh tokens get
- * refreshed periodically. Acceptable for an internal CLI.
+ * History: older builds wrote `%APPDATA%\scrumtime-nodejs\tokens.json` in
+ * plaintext because Microsoft access tokens exceeded the Windows Credential
+ * Manager size cap. The DPAPI-blob path used by secure-storage has no such
+ * cap, so we get encryption back without the keytar workaround. Existing
+ * plaintext files are silently migrated on the next `loadTokens()` call.
  */
-const tokenStore = new Conf<TokenSet>({ projectName: 'scrumtime', configName: 'tokens' });
+const legacyTokenStore = new Conf<TokenSet>({ projectName: 'scrumtime', configName: 'tokens' });
 
 export async function saveTokens(t: TokenSet): Promise<void> {
-  tokenStore.set('access_token', t.access_token);
-  if (t.refresh_token) tokenStore.set('refresh_token', t.refresh_token);
-  else tokenStore.delete('refresh_token');
-  tokenStore.set('expires_at', t.expires_at);
-  tokenStore.set('token_type', t.token_type);
+  await setSecret(JSON.stringify(t));
+  await deleteLegacyPlaintext();
 }
 
 export async function loadTokens(): Promise<TokenSet | null> {
-  const access_token = tokenStore.get('access_token');
-  if (!access_token) return null;
-  return {
-    access_token,
-    refresh_token: tokenStore.get('refresh_token'),
-    expires_at: tokenStore.get('expires_at') ?? 0,
-    token_type: tokenStore.get('token_type') ?? 'Bearer',
-  };
+  const secret = await getSecret();
+  if (secret) {
+    try {
+      return JSON.parse(secret) as TokenSet;
+    } catch {
+      return null;
+    }
+  }
+  // No secret on disk yet — check whether an older plaintext file exists and
+  // migrate it transparently. The user sees nothing different.
+  return await migrateLegacyPlaintext();
 }
 
 export async function clearTokens(): Promise<void> {
-  tokenStore.clear();
+  await deleteSecret();
+  await deleteLegacyPlaintext();
+}
+
+async function migrateLegacyPlaintext(): Promise<TokenSet | null> {
+  const legacyAccess = legacyTokenStore.get('access_token');
+  if (!legacyAccess) return null;
+  const migrated: TokenSet = {
+    access_token: legacyAccess,
+    refresh_token: legacyTokenStore.get('refresh_token'),
+    expires_at: legacyTokenStore.get('expires_at') ?? 0,
+    token_type: legacyTokenStore.get('token_type') ?? 'Bearer',
+  };
+  try {
+    await setSecret(JSON.stringify(migrated));
+    await deleteLegacyPlaintext();
+  } catch {
+    // If secure storage is unavailable on this host (e.g. Linux without
+    // libsecret-tools), keep the legacy plaintext as a fallback so the user
+    // is not stranded. They will be re-prompted by ensureSecretToolAvailable
+    // when they next try to save anything.
+  }
+  return migrated;
+}
+
+async function deleteLegacyPlaintext(): Promise<void> {
+  try {
+    legacyTokenStore.clear();
+  } catch { /* ignore */ }
+  try {
+    await unlink(legacyTokenStore.path);
+  } catch { /* file might not exist, or conf re-creates it on next access */ }
 }
