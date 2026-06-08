@@ -103,11 +103,41 @@ That prints the latest version and, if newer, the exact command to update (which
 
 ## Where things live
 
-- **Tokens** (Microsoft access + refresh tokens) cache in a per-user config file:
-  - Windows — `%APPDATA%\scrumtime-nodejs\tokens.json`
-  - macOS — `~/Library/Preferences/scrumtime-nodejs/tokens.json`
-  - Linux — `~/.config/scrumtime-nodejs/tokens.json`
-- **No password is ever stored** — you authenticate against Microsoft directly.
+- **Tokens** (Microsoft access + refresh tokens) are persisted encrypted at rest, via the OS-native data-protection API:
+  - Windows — DPAPI (per-user scope). Ciphertext blob at `%APPDATA%\scrumtime-nodejs\tokens.dpapi`. Only the logged-in Windows user can decrypt.
+  - macOS — Keychain (login keychain). Item visible via `security find-generic-password -s scrumtime-cli -a tokens`.
+  - Linux — libsecret (requires `libsecret-tools` installed). Item visible via `secret-tool lookup service scrumtime-cli account tokens`.
+- **No password is ever stored** — you authenticate against Microsoft directly. Only the OAuth tokens are cached.
+- Older installs that wrote a plaintext `tokens.json` are migrated to the encrypted form transparently on the next command after upgrade. No re-login required.
+
+---
+
+## Using scrum from an AI agent
+
+`scrum` is built to be called by AI agents the same way a human at a terminal calls it. Every read command supports `--json`; every write command exits 0 on success and prints the new entity's id. There is no separate MCP server — the agent's host process shells out to the binary, inherits the human's encrypted token cache, and gets the same data the human gets.
+
+**One-time setup (the human runs this):**
+
+```sh
+scrum login
+```
+
+The agent runs in the same OS user's environment from then on. Token reads cost about 50-200 ms per command (OS keychain access).
+
+**Recommended patterns:**
+
+- **Discovery first.** Most agent flows start by asking what's available. `scrum projects --json` returns a typed list the agent can ground its next steps on. `scrum tasks <abbr> --json` gives the tasks under one project.
+- **State reads use `--json`.** `scrum me --json`, `scrum time --from 2026-06-01 --to 2026-06-08 --json`, `scrum pto --json`. The non-JSON output is for humans and includes ANSI colour codes — do not parse it.
+- **Writes are short and idempotent-shaped.** `scrum time log INTERN 4023 1.5 -n "weekly sync"` exits 0 on success and prints `logged 1.5h on 2026-06-08 (id 19xxxx)`. The id in that line is grep-able if the agent needs to reference or delete the row later. Backdated logs use `-d YYYY-MM-DD`.
+- **Errors come back on stderr** with a clear short message. Exit code 1 means "command did not succeed" — no partial-success states the agent has to reason about.
+
+**Anti-patterns:**
+
+- Don't ask the agent to parse the table-style human output. Always pass `--json`.
+- Don't bake the agent's authentication into the binary's first launch — let the human do the OAuth dance once, then the agent inherits the encrypted token. The CLI does not have a service-account flow on purpose.
+- Don't loop `scrum me` to "check connectivity" — every call decrypts a token. Cache the result for the session if you need to refer to the calling user.
+
+This is the build pattern I wrote up in [Your Oracle APEX app deserves a CLI](https://markuspg.com/blog/your-apex-app-deserves-a-cli). The scrumtime CLI is the working example: one binary, two audiences (humans and AI), one ORDS module behind it.
 
 ---
 
