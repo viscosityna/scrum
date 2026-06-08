@@ -109,13 +109,21 @@ export const api = {
   },
 
   async project(idOrAbbr: string | number): Promise<Project> {
+    // Always resolve to a numeric id, then call the single-item endpoint.
+    // The list endpoint returns a thinner row shape; the single-item
+    // endpoint is the one that carries the resolved labels (client_name,
+    // status_label, cycle_label, manager_name, owner_name). Without this
+    // normalisation an abbr lookup silently bypasses the richer shape.
+    let id: number;
     if (typeof idOrAbbr === 'number' || /^\d+$/.test(String(idOrAbbr))) {
-      return request<Project>('GET', `/projects/${idOrAbbr}`);
+      id = Number(idOrAbbr);
+    } else {
+      const env = await api.projects({ abbr: String(idOrAbbr) });
+      const found = env.items[0];
+      if (!found) throw new ApiError(404, 'project not found', `no project with abbr=${idOrAbbr}`);
+      id = found.id;
     }
-    const env = await api.projects({ abbr: String(idOrAbbr) });
-    const found = env.items[0];
-    if (!found) throw new ApiError(404, 'project not found', `no project with abbr=${idOrAbbr}`);
-    return found;
+    return request<Project>('GET', `/projects/${id}`);
   },
 
   tasks: (projectId: number) =>
