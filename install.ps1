@@ -31,6 +31,35 @@ try {
   exit 1
 }
 
+# ----- verify integrity (SHA256 against the release's checksums.txt) -----
+$ChecksumUrl = $Url -replace "/$Asset$", '/checksums.txt'
+try {
+  $ChecksumText = (Invoke-WebRequest -Uri $ChecksumUrl -UseBasicParsing).Content
+} catch {
+  Remove-Item $ExePath -ErrorAction SilentlyContinue
+  Write-Error "scrum: could not retrieve checksum for $Asset from $ChecksumUrl. Refusing to install an unverified binary."
+  exit 1
+}
+$Expected = $null
+foreach ($line in ($ChecksumText -split "`n")) {
+  $parts = ($line.Trim() -split '\s+')
+  if ($parts.Length -ge 2 -and $parts[1] -eq $Asset) {
+    $Expected = $parts[0].ToLower()
+    break
+  }
+}
+if (-not $Expected) {
+  Remove-Item $ExePath -ErrorAction SilentlyContinue
+  Write-Error "scrum: $Asset is not listed in checksums.txt. Refusing to install an unverified binary."
+  exit 1
+}
+$Actual = (Get-FileHash -Path $ExePath -Algorithm SHA256).Hash.ToLower()
+if ($Expected -ne $Actual) {
+  Remove-Item $ExePath -ErrorAction SilentlyContinue
+  Write-Error "scrum: SHA256 mismatch. Expected $Expected, got $Actual. Aborting install."
+  exit 1
+}
+
 # ----- add to PATH (user-scope, no admin needed) -----
 $UserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
 $AlreadyOnPath = ($UserPath -split ';') -contains $InstallDir

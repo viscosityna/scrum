@@ -119,11 +119,39 @@ jobs:
             ./${{ matrix.target }} --version
           fi
 
+      - name: compute SHA256 (unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum "${{ matrix.target }}" > "${{ matrix.target }}.sha256"
+          else
+            # macOS doesn't ship sha256sum; rewrite shasum -a 256 output
+            # ("<hash>  <filename>") to match the sha256sum format exactly.
+            shasum -a 256 "${{ matrix.target }}" > "${{ matrix.target }}.sha256"
+          fi
+          cat "${{ matrix.target }}.sha256"
+
+      - name: compute SHA256 (windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Path "${{ matrix.target }}" -Algorithm SHA256).Hash.ToLower()
+          # Match the sha256sum-style "<hash>  <filename>" line so the
+          # install scripts can parse a single checksums.txt format.
+          "$hash  ${{ matrix.target }}" | Out-File -FilePath "${{ matrix.target }}.sha256" -Encoding ascii -NoNewline
+          # Out-File on PowerShell 5 strips no newline by default, but the
+          # release job concatenates files so ensure a trailing newline.
+          Add-Content -Path "${{ matrix.target }}.sha256" -Value ""
+          Get-Content "${{ matrix.target }}.sha256"
+
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}
-          path: ${{ matrix.target }}
+          path: |
+            ${{ matrix.target }}
+            ${{ matrix.target }}.sha256
           if-no-files-found: error
           retention-days: 7
 
@@ -143,6 +171,17 @@ jobs:
       - name: list what we collected
         run: ls -la artifacts/
 
+      - name: assemble checksums.txt
+        # Concatenate the per-binary .sha256 files into one checksums.txt
+        # in sha256sum format ("<hash>  <filename>", one line per asset).
+        # install.sh and install.ps1 fetch this file at install time and
+        # verify the downloaded binary against the published hash.
+        run: |
+          cd artifacts
+          cat *.sha256 | sort > checksums.txt
+          echo "=== checksums.txt ==="
+          cat checksums.txt
+
       - name: publish release
         uses: softprops/action-gh-release@v2
         with:
@@ -151,5 +190,6 @@ jobs:
             artifacts/scrum-macos-arm64
             artifacts/scrum-macos-x64
             artifacts/scrum-linux-x64
+            artifacts/checksums.txt
           generate_release_notes: true
           fail_on_unmatched_files: true

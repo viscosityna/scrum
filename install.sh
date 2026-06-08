@@ -56,6 +56,31 @@ if ! curl -fsSL "$URL" -o "$INSTALL_DIR/scrum"; then
 fi
 chmod +x "$INSTALL_DIR/scrum"
 
+# ----- verify integrity (SHA256 against the release's checksums.txt) -----
+# This catches a tampered binary on GitHub Releases or in transit. The
+# release workflow ships a checksums.txt alongside the binaries with one
+# "<sha256>  <filename>" line per asset.
+CHECKSUM_URL="$(echo "$URL" | sed "s|/$ASSET\$|/checksums.txt|")"
+EXPECTED="$(curl -fsSL "$CHECKSUM_URL" 2>/dev/null | awk -v f="$ASSET" '$2 == f { print $1 }')"
+if [ -z "$EXPECTED" ]; then
+  echo "scrum: could not retrieve checksum for $ASSET from $CHECKSUM_URL" >&2
+  echo "scrum: refusing to install an unverified binary" >&2
+  rm -f "$INSTALL_DIR/scrum"
+  exit 1
+fi
+if command -v sha256sum >/dev/null 2>&1; then
+  ACTUAL="$(sha256sum "$INSTALL_DIR/scrum" | awk '{print $1}')"
+else
+  ACTUAL="$(shasum -a 256 "$INSTALL_DIR/scrum" | awk '{print $1}')"
+fi
+if [ "$EXPECTED" != "$ACTUAL" ]; then
+  echo "scrum: SHA256 mismatch — the downloaded binary does not match the release's published checksum" >&2
+  echo "  expected: $EXPECTED" >&2
+  echo "  got:      $ACTUAL" >&2
+  rm -f "$INSTALL_DIR/scrum"
+  exit 1
+fi
+
 # clear macOS Gatekeeper quarantine flag so first run doesn't prompt
 if [ "$(uname -s)" = "Darwin" ]; then
   xattr -d com.apple.quarantine "$INSTALL_DIR/scrum" 2>/dev/null || true
