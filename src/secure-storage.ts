@@ -57,11 +57,17 @@ async function setWindowsDpapi(value: string): Promise<void> {
   const blobPath = dpapiBlobPath();
   await mkdir(path.dirname(blobPath), { recursive: true });
   const escapedPath = blobPath.replace(/\\/g, '\\\\').replace(/'/g, "''");
+  // System.Security.Cryptography.ProtectedData lives in System.Security.dll,
+  // which neither Windows PowerShell 5.x nor PowerShell 7 auto-loads. Add-Type
+  // pulls it in. Use the typed DataProtectionScope enum rather than the bare
+  // string so coercion works under both runtimes.
   const script = [
     `$ErrorActionPreference = 'Stop'`,
+    `Add-Type -AssemblyName System.Security`,
     `$plain = [Console]::In.ReadToEnd()`,
     `$bytes = [System.Text.Encoding]::UTF8.GetBytes($plain)`,
-    `$protected = [System.Security.Cryptography.ProtectedData]::Protect($bytes, $null, 'CurrentUser')`,
+    `$scope = [System.Security.Cryptography.DataProtectionScope]::CurrentUser`,
+    `$protected = [System.Security.Cryptography.ProtectedData]::Protect($bytes, $null, $scope)`,
     `[System.IO.File]::WriteAllBytes('${escapedPath}', $protected)`,
   ].join('; ');
   await runPowershellWithInput(script, value);
@@ -73,8 +79,10 @@ async function getWindowsDpapi(): Promise<string | null> {
   const escapedPath = blobPath.replace(/\\/g, '\\\\').replace(/'/g, "''");
   const script = [
     `$ErrorActionPreference = 'Stop'`,
+    `Add-Type -AssemblyName System.Security`,
     `$bytes = [System.IO.File]::ReadAllBytes('${escapedPath}')`,
-    `$unprotected = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $null, 'CurrentUser')`,
+    `$scope = [System.Security.Cryptography.DataProtectionScope]::CurrentUser`,
+    `$unprotected = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $null, $scope)`,
     `[Console]::Out.Write([System.Text.Encoding]::UTF8.GetString($unprotected))`,
   ].join('; ');
   try {
