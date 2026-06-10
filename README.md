@@ -71,6 +71,7 @@ If sign-in succeeds but `scrum me` says "no scrumtime employee record was found"
 | `scrum time log <ABBR> <task_id> <hours> -n "note"` | log time today |
 | `scrum time delete <id>` | delete one of your entries |
 | `scrum pto` | PTO balance + anniversary |
+| `scrum pto request <hours> <date> [reason]` | submit a PTO request (`hours`: 4 half / 8 full; `--to` for multi-day; `--type` vacation\|unpaid\|medical\|other) |
 | `scrum logout` | clear cached tokens |
 | `scrum update` | check for a newer release |
 | `scrum config` | show current CLI config |

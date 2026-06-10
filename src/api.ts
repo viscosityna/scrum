@@ -147,4 +147,28 @@ export const api = {
     request<TimesheetEntry>('PATCH', `/timesheets/${id}`, patch),
 
   deleteTime: (id: number) => request<void>('DELETE', `/timesheets/${id}`),
+
+  requestPto: (body: {
+    start_date: string;
+    end_date?: string;
+    hour_range_id?: 13 | 14;
+    type_id?: number;
+    count_weekends?: boolean;
+    reason?: string;
+  }) =>
+    request<{
+      request_id: number;
+      employee_id: number;
+      status_id: number;
+      status_label: string;
+      type_id: number;
+      type_label: string;
+      hour_range_id: number;
+      hour_range_label: string;
+      start_date: string;
+      end_date: string;
+      days_inserted: number;
+      days: string[];
+      reason: string | null;
+    }>('POST', '/pto/request', body),
 };

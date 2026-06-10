@@ -8,7 +8,7 @@ import { meCommand } from './commands/me.js';
 import { projectsCommand, projectCommand, tasksCommand } from './commands/projects.js';
 import { timeListCommand, timeLogCommand, timeDeleteCommand } from './commands/time.js';
 import { debugTokenCommand } from './commands/debug.js';
-import { ptoCommand } from './commands/pto.js';
+import { ptoBalanceCommand, ptoRequestCommand } from './commands/pto.js';
 import { updateCommand } from './commands/update.js';
 
 const program = new Command();
@@ -82,11 +82,27 @@ time
   .description('delete a time entry by id')
   .action(timeDeleteCommand);
 
-program
-  .command('pto')
+const pto = program.command('pto').description('PTO balance + requests');
+
+pto
+  .command('balance', { isDefault: true })
   .description('show your PTO balance')
   .option('--json', 'output JSON')
-  .action(ptoCommand);
+  .action(ptoBalanceCommand);
+
+pto
+  .command('request <hours> <date> [reason]')
+  .description(
+    'submit a PTO request (hours = 4 half-day or 8 full-day; date = YYYY-MM-DD)',
+  )
+  .option('--to <YYYY-MM-DD>', 'last day of a multi-day request (default: same as <date>)')
+  .option('--type <name>', 'vacation | unpaid | medical | other (default: vacation)')
+  .option('-n, --note <note>', 'optional reason — overrides the [reason] positional')
+  .option('--count-weekends', 'include Sat/Sun in the request (default: skip weekends)')
+  .option('--json', 'output JSON')
+  .action((hours, date, reason, opts) =>
+    ptoRequestCommand(hours, date, reason, opts),
+  );
 
 program
   .command('update')
