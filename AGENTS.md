@@ -6,7 +6,7 @@ Short orientation note for the next AI agent picking this repo up on a different
 
 The `scrum` CLI for [Viscosity NA scrumtime](https://www.viscosityna.com). A standalone Node 22 SEA binary that talks to a Cloudflare Worker BFF, which in turn talks to ORDS at `prodapx.apxpubnet.apxvcn.oraclevcn.com`. Distributed via GitHub Releases on this repo; `viscosityna/scrum` is the canonical origin. Users install with a one-liner from the README.
 
-Architecture, BFF + ORDS internals, and Microsoft Entra JWT validation live in the **internal** sibling repo at `viscosityna/internal` → `scrumtime/` folder. That repo is where the SQL handlers and the Worker source live; this repo is just the CLI surface.
+Architecture, BFF + ORDS internals, and Microsoft Entra JWT validation live in the **internal** sibling repo at `Markuspg1/internal` → `scrumtime/` folder. That repo is where the SQL handlers and the Worker source live; this repo is just the CLI surface.
 
 ## How to find Marco's broader context
 
@@ -14,9 +14,9 @@ This repo is normally checked out under Marco's workspace at `c:\Users\Marco\Doc
 
 ## Latest state — 2026-06-11
 
-**Last release tag: `v0.1.17`** (committed locally; pushed to origin in the same session this file was added). It closes P2.1 of [internal/scrumtime/cli/UPGRADES.md](https://github.com/viscosityna/internal/blob/main/scrumtime/cli/UPGRADES.md) — adds `scrum pto request <hours> <date> [reason]` plus a sibling ORDS handler at `POST /api/v1/pto/request`.
+**Last release tag: `v0.1.17`** (committed locally; pushed to origin in the same session this file was added). It closes P2.1 of [internal/scrumtime/cli/UPGRADES.md](https://github.com/Markuspg1/internal/blob/main/scrumtime/cli/UPGRADES.md) — adds `scrum pto request <hours> <date> [reason]` plus a sibling ORDS handler at `POST /api/v1/pto/request`.
 
-The SQL handler ([v2_pto_request.sql](https://github.com/viscosityna/internal/blob/main/scrumtime/sql/v2_pto_request.sql) in the sibling repo) was applied to the live `scrumtm` schema on the same day. It writes to three tables — `HR_TIMEOFF_REQUESTS` (parent), `HR_TIMEOFF_REQUEST_DETAILS` (one row per business day), `HR_TIMEOFF_REQUEST_NOTES` (optional reason) — in one transaction.
+The SQL handler ([v2_pto_request.sql](https://github.com/Markuspg1/internal/blob/main/scrumtime/sql/v2_pto_request.sql) in the sibling repo) was applied to the live `scrumtm` schema on the same day. It writes to three tables — `HR_TIMEOFF_REQUESTS` (parent), `HR_TIMEOFF_REQUEST_DETAILS` (one row per business day), `HR_TIMEOFF_REQUEST_NOTES` (optional reason) — in one transaction.
 
 ## Backlog state
 
