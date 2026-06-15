@@ -72,6 +72,12 @@ If sign-in succeeds but `scrum me` says "no scrumtime employee record was found"
 | `scrum time delete <id>` | delete one of your entries |
 | `scrum pto` | PTO balance + anniversary |
 | `scrum pto request <hours> <date> [reason]` | submit a PTO request (`hours`: 4 half / 8 full; `--to` for multi-day; `--type` vacation\|unpaid\|medical\|other) |
+| `scrum pto requests` | list PTO requests (default: org-wide pending — manager/admin) |
+| `scrum pto requests --mine` | only requests routed to you for approval |
+| `scrum pto requests --for jdoe` | one person's submitted requests |
+| `scrum pto requests --status approved` | filter by status (pending/new/in_review/approved/declined/closed/all) |
+| `scrum pto approve <id> -n "note"` | approve a request (manager/admin) |
+| `scrum pto decline <id> -n "reason"` | decline a request (manager/admin) |
 | `scrum employees` | list employees (manager/admin only) |
 | `scrum logout` | clear cached tokens |
 | `scrum update` | check for a newer release |

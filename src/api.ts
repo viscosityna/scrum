@@ -204,4 +204,76 @@ export const api = {
       days: string[];
       reason: string | null;
     }>('POST', '/pto/request', body),
+
+  ptoRequests(params: {
+    status?: string;        // CSV of status ids; default = pending (41,42)
+    all?: boolean;
+    for?: string;           // requestor filter (manager-only if ≠ caller)
+    approver?: string;      // approver filter (manager-only if ≠ caller)
+    mine?: boolean;         // alias for approver=caller
+  } = {}) {
+    const qs = new URLSearchParams();
+    if (params.status) qs.set('status', params.status);
+    if (params.all) qs.set('all', '1');
+    if (params.for) qs.set('for_upn', params.for);
+    if (params.approver) qs.set('approver_upn', params.approver);
+    if (params.mine) qs.set('mine', '1');
+    const suffix = qs.toString() ? `?${qs}` : '';
+    return request<CollectionEnvelope<PtoRequestSummary>>('GET', `/pto/requests${suffix}`);
+  },
+
+  ptoRequest: (id: number) => request<PtoRequestDetail>('GET', `/pto/requests/${id}`),
+
+  approvePto: (id: number, body: { note?: string } = {}) =>
+    request<PtoRequestActionResult>('POST', `/pto/requests/${id}/approve`, body),
+
+  declinePto: (id: number, body: { note?: string } = {}) =>
+    request<PtoRequestActionResult>('POST', `/pto/requests/${id}/decline`, body),
 };
+
+export interface PtoRequestSummary {
+  id: number;
+  employee_id: number;
+  employee_username: string | null;
+  employee_name: string | null;
+  request_date: string;
+  start_date: string;
+  end_date: string;
+  request_type_id: number;
+  type_label: string | null;
+  status_id: number;
+  status_label: string | null;
+  approval_employee_id: number | null;
+  approver_username: string | null;
+  approver_name: string | null;
+  count_weekends: 'Y' | 'N' | null;
+  days_count: number;
+  approved_dt: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PtoRequestDetail extends PtoRequestSummary {
+  days: Array<{
+    id: number;
+    date: string;
+    hour_range_id: number;
+    hour_range_label: string | null;
+  }>;
+  notes: Array<{
+    id: number;
+    note: string;
+    author_id: number;
+    author_username: string | null;
+    created_at: string;
+  }>;
+}
+
+export interface PtoRequestActionResult {
+  id: number;
+  status_id: number;
+  status_label: string;
+  approval_employee_id?: number;
+  note_added?: 'true' | 'false';
+  idempotent?: 'true';
+}

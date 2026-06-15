@@ -8,7 +8,13 @@ import { meCommand } from './commands/me.js';
 import { projectsCommand, projectCommand, tasksCommand } from './commands/projects.js';
 import { timeListCommand, timeLogCommand, timeDeleteCommand } from './commands/time.js';
 import { debugTokenCommand } from './commands/debug.js';
-import { ptoBalanceCommand, ptoRequestCommand } from './commands/pto.js';
+import {
+  ptoBalanceCommand,
+  ptoRequestCommand,
+  ptoRequestsCommand,
+  ptoApproveCommand,
+  ptoDeclineCommand,
+} from './commands/pto.js';
 import { employeesCommand } from './commands/employees.js';
 import { updateCommand } from './commands/update.js';
 
@@ -108,6 +114,34 @@ pto
   .action((hours, date, reason, opts) =>
     ptoRequestCommand(hours, date, reason, opts),
   );
+
+pto
+  .command('requests')
+  .description('list PTO requests (default: org-wide pending — manager/admin only)')
+  .option(
+    '--status <name|csv>',
+    'pending (default) | new | in_review | approved | declined | closed | all | <csv of ids>',
+  )
+  .option('--all', 'shorthand for --status all')
+  .option('--for <username>', 'filter to this requestor (manager-only if not yourself)')
+  .option('--approver <username>', 'filter to this approver (manager-only if not yourself)')
+  .option('--mine', 'requests routed to you for approval (alias for --approver <self>)')
+  .option('--json', 'output JSON')
+  .action(ptoRequestsCommand);
+
+pto
+  .command('approve <request_id>')
+  .description('approve a PTO request (manager/admin only)')
+  .option('-n, --note <note>', 'optional note attached to the approval')
+  .option('--json', 'output JSON')
+  .action((id, opts) => ptoApproveCommand(id, opts));
+
+pto
+  .command('decline <request_id>')
+  .description('decline a PTO request (manager/admin only)')
+  .option('-n, --note <note>', 'optional reason attached to the decline')
+  .option('--json', 'output JSON')
+  .action((id, opts) => ptoDeclineCommand(id, opts));
 
 program
   .command('employees')
