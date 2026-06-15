@@ -1,8 +1,8 @@
 import kleur from 'kleur';
 import { api } from '../api.js';
 
-export async function meCommand(opts: { json?: boolean }) {
-  const me = await api.me();
+export async function meCommand(opts: { json?: boolean; for?: string }) {
+  const me = await api.me({ for: opts.for });
   if (opts.json) {
     process.stdout.write(JSON.stringify(me, null, 2) + '\n');
     return;

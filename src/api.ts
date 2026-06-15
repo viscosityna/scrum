@@ -93,10 +93,25 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return (await res.json()) as T;
 }
 
-export const api = {
-  me: () => request<Employee>('GET', '/me'),
+// Manager-mode: every read endpoint that scopes to an employee accepts an
+// optional `for` (server-side bind: `for_upn`). The ORDS gate in
+// scrumtm.api_caller_role enforces that only managers/admins can target an
+// employee other than themselves; the client just threads the value through.
+function appendForUpn(qs: URLSearchParams, opts: { for?: string }): void {
+  if (opts.for) qs.set('for_upn', opts.for);
+}
 
-  projects(params: { mine?: boolean; active?: boolean; q?: string; abbr?: string } = {}) {
+export const api = {
+  me: (opts: { for?: string } = {}) => {
+    const qs = new URLSearchParams();
+    appendForUpn(qs, opts);
+    const suffix = qs.toString() ? `?${qs}` : '';
+    return request<Employee>('GET', `/me${suffix}`);
+  },
+
+  projects(
+    params: { mine?: boolean; active?: boolean; q?: string; abbr?: string; for?: string } = {},
+  ) {
     // ORDS reserves the `q` query parameter for its own JSON-filter syntax, so
     // we send our name-substring filter as `search=`. CLI flag stays `-q`.
     const qs = new URLSearchParams();
@@ -104,6 +119,7 @@ export const api = {
     if (params.active) qs.set('active', '1');
     if (params.q) qs.set('search', params.q);
     if (params.abbr) qs.set('abbr', params.abbr);
+    appendForUpn(qs, params);
     const suffix = qs.toString() ? `?${qs}` : '';
     return request<CollectionEnvelope<Project>>('GET', `/projects${suffix}`);
   },
@@ -129,15 +145,32 @@ export const api = {
   tasks: (projectId: number) =>
     request<CollectionEnvelope<Task>>('GET', `/projects/${projectId}/tasks`),
 
-  timesheets(params: { from?: string; to?: string; project_id?: number; task_id?: number } = {}) {
+  timesheets(
+    params: {
+      from?: string;
+      to?: string;
+      project_id?: number;
+      task_id?: number;
+      for?: string;
+    } = {},
+  ) {
     // Server-side bind names use dt_from / dt_to (avoiding the SQL keyword `from`).
     const qs = new URLSearchParams();
     if (params.from) qs.set('dt_from', params.from);
     if (params.to) qs.set('dt_to', params.to);
     if (params.project_id) qs.set('project_id', String(params.project_id));
     if (params.task_id) qs.set('task_id', String(params.task_id));
+    appendForUpn(qs, params);
     const suffix = qs.toString() ? `?${qs}` : '';
     return request<CollectionEnvelope<TimesheetEntry>>('GET', `/timesheets${suffix}`);
+  },
+
+  employees(params: { q?: string; include_inactive?: boolean } = {}) {
+    const qs = new URLSearchParams();
+    if (params.q) qs.set('search', params.q);
+    if (params.include_inactive) qs.set('include_inactive', '1');
+    const suffix = qs.toString() ? `?${qs}` : '';
+    return request<CollectionEnvelope<Employee>>('GET', `/employees${suffix}`);
   },
 
   logTime: (entry: { task_id: number; hours: number; input_date: string; notes?: string }) =>

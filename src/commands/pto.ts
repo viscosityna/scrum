@@ -12,10 +12,13 @@ interface PtoBalance {
   is_pto_admin: 'Y' | 'N';
 }
 
-async function fetchPto(): Promise<PtoBalance> {
+async function fetchPto(opts: { for?: string } = {}): Promise<PtoBalance> {
   const cfg = getConfig();
   const token = await getAccessToken();
-  const res = await fetch(`${cfg.api_base.replace(/\/$/, '')}/pto/balance`, {
+  const qs = new URLSearchParams();
+  if (opts.for) qs.set('for_upn', opts.for);
+  const suffix = qs.toString() ? `?${qs}` : '';
+  const res = await fetch(`${cfg.api_base.replace(/\/$/, '')}/pto/balance${suffix}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   if (!res.ok) {
@@ -31,8 +34,8 @@ async function fetchPto(): Promise<PtoBalance> {
   return (await res.json()) as PtoBalance;
 }
 
-export async function ptoBalanceCommand(opts: { json?: boolean }) {
-  const balance = await fetchPto();
+export async function ptoBalanceCommand(opts: { json?: boolean; for?: string }) {
+  const balance = await fetchPto({ for: opts.for });
   if (opts.json) {
     process.stdout.write(JSON.stringify(balance, null, 2) + '\n');
     return;

@@ -19,6 +19,7 @@ export async function timeListCommand(opts: {
   to?: string;
   project?: string;
   json?: boolean;
+  for?: string;
 }) {
   let from: string | undefined;
   let to: string | undefined;
@@ -31,7 +32,7 @@ export async function timeListCommand(opts: {
   }
 
   const projectId = opts.project ? (await api.project(opts.project)).id : undefined;
-  const env = await api.timesheets({ from, to, project_id: projectId });
+  const env = await api.timesheets({ from, to, project_id: projectId, for: opts.for });
 
   if (opts.json) {
     process.stdout.write(JSON.stringify(env.items, null, 2) + '\n');

@@ -72,9 +72,12 @@ If sign-in succeeds but `scrum me` says "no scrumtime employee record was found"
 | `scrum time delete <id>` | delete one of your entries |
 | `scrum pto` | PTO balance + anniversary |
 | `scrum pto request <hours> <date> [reason]` | submit a PTO request (`hours`: 4 half / 8 full; `--to` for multi-day; `--type` vacation\|unpaid\|medical\|other) |
+| `scrum employees` | list employees (manager/admin only) |
 | `scrum logout` | clear cached tokens |
 | `scrum update` | check for a newer release |
 | `scrum config` | show current CLI config |
+
+**Manager mode (managers + admins only).** Add `--for <username>` to any of `scrum me`, `scrum projects`, `scrum time`, `scrum pto` to read another employee's data. Use `scrum employees -q name` to find usernames. The server rejects `--for` for non-managers; the CLI fails fast with a clear error before issuing the request.
 
 Add `--json` to most commands for machine-readable output.
 

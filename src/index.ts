@@ -9,6 +9,7 @@ import { projectsCommand, projectCommand, tasksCommand } from './commands/projec
 import { timeListCommand, timeLogCommand, timeDeleteCommand } from './commands/time.js';
 import { debugTokenCommand } from './commands/debug.js';
 import { ptoBalanceCommand, ptoRequestCommand } from './commands/pto.js';
+import { employeesCommand } from './commands/employees.js';
 import { updateCommand } from './commands/update.js';
 
 const program = new Command();
@@ -33,8 +34,9 @@ program
 
 program
   .command('me')
-  .description('show the authenticated employee')
+  .description('show the authenticated employee (or another via --for, manager-only)')
   .option('--json', 'output JSON')
+  .option('--for <username>', 'manager/admin: show another employee instead')
   .action(meCommand);
 
 program
@@ -43,6 +45,7 @@ program
   .option('-a, --all', 'show all visible projects (default: only those you are a resource on)')
   .option('--include-closed', 'include closed / inactive projects (default: active only)')
   .option('-q <query>', 'filter by name substring')
+  .option('--for <username>', "manager/admin: list this employee's projects instead")
   .option('--json', 'output JSON')
   .action(projectsCommand);
 
@@ -67,6 +70,7 @@ time
   .option('--from <YYYY-MM-DD>', 'range start')
   .option('--to <YYYY-MM-DD>', 'range end')
   .option('-p, --project <idOrAbbr>', 'filter to one project')
+  .option('--for <username>', "manager/admin: list this employee's entries instead")
   .option('--json', 'output JSON')
   .action(timeListCommand);
 
@@ -86,8 +90,9 @@ const pto = program.command('pto').description('PTO balance + requests');
 
 pto
   .command('balance', { isDefault: true })
-  .description('show your PTO balance')
+  .description('show your PTO balance (or someone else\'s via --for, manager-only)')
   .option('--json', 'output JSON')
+  .option('--for <username>', "manager/admin: show this employee's PTO balance instead")
   .action(ptoBalanceCommand);
 
 pto
@@ -103,6 +108,14 @@ pto
   .action((hours, date, reason, opts) =>
     ptoRequestCommand(hours, date, reason, opts),
   );
+
+program
+  .command('employees')
+  .description('list employees (manager/admin only)')
+  .option('-q <query>', 'filter by name / email / username substring')
+  .option('--include-inactive', 'include inactive employees (default: active only)')
+  .option('--json', 'output JSON')
+  .action(employeesCommand);
 
 program
   .command('update')
