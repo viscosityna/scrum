@@ -98,9 +98,19 @@ function renderProjectReport(r: ProjectReport): void {
 
 function renderTeamReport(r: TeamReport): void {
   const range = `${r.week_start} (Mon) → ${r.week_end} (Sun)`;
+  const ptoSummary =
+    r.total_pto_hours != null && r.total_pto_hours > 0
+      ? `, ${fmtHours(r.total_pto_hours)} PTO`
+      : '';
+  const capSummary =
+    r.capacity_per_person != null
+      ? `, capacity ${fmtHours(r.capacity_per_person)}/person`
+      : '';
   console.log(
     kleur.bold(`Team — week of ${range}`) +
-      kleur.dim(`   total: ${fmtHours(r.total_hours)} across ${r.employees.length} employees`),
+      kleur.dim(
+        `   ${fmtHours(r.total_hours)} worked${ptoSummary} across ${r.employees.length} people${capSummary}`,
+      ),
   );
   if (r.employees.length === 0) {
     console.log(kleur.dim('  no entries this week'));
@@ -109,10 +119,24 @@ function renderTeamReport(r: TeamReport): void {
   console.log('');
 
   for (const e of r.employees) {
+    const pto = e.pto_hours ?? 0;
+    const cap = e.capacity_hours;
+    const util = e.utilization_pct;
+
+    const utilStr =
+      util != null
+        ? `  ${utilColor(util)}`
+        : '';
+    const ptoStr = pto > 0 ? `  ${kleur.dim('PTO ' + fmtHours(pto))}` : '';
+    const capStr = cap != null ? `  ${kleur.dim('cap ' + fmtHours(cap))}` : '';
+
     console.log(
       `${kleur.cyan((e.username ?? '—').padEnd(12))} ` +
-        `${kleur.bold(padHours(e.week_hours, 6))}   ` +
-        `${kleur.dim(e.name ?? '')}`,
+        `${kleur.bold(padHours(e.week_hours, 6))}` +
+        ptoStr +
+        capStr +
+        utilStr +
+        `   ${kleur.dim(e.name ?? '')}`,
     );
     for (const bp of e.by_project) {
       const abbr = (bp.project_abbr ?? '?').padEnd(8);
@@ -121,4 +145,11 @@ function renderTeamReport(r: TeamReport): void {
       );
     }
   }
+}
+
+function utilColor(pct: number): string {
+  const label = `util ${pct}%`;
+  if (pct >= 90 && pct <= 110) return kleur.green(label);
+  if (pct >= 75) return kleur.yellow(label);
+  return kleur.red(label);
 }

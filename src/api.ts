@@ -321,11 +321,16 @@ export interface TeamReport {
   week_start: string;
   week_end: string;
   total_hours: number;
+  total_pto_hours?: number;
+  capacity_per_person?: number;
   employees: Array<{
     employee_id: number;
     username: string | null;
     name: string | null;
     week_hours: number;
+    pto_hours?: number;
+    capacity_hours?: number;
+    utilization_pct?: number;
     by_project: Array<{
       project_id: number;
       project_abbr: string | null;
