@@ -76,6 +76,7 @@ If sign-in succeeds but `scrum me` says "no scrumtime employee record was found"
 | `scrum pto requests --mine` | only requests routed to you for approval |
 | `scrum pto requests --for jdoe` | one person's submitted requests |
 | `scrum pto requests --status approved` | filter by status (pending/new/in_review/approved/declined/closed/all) |
+| `scrum pto show <id>` | one PTO request in detail — days + notes |
 | `scrum pto approve <id> -n "note"` | approve a request (manager/admin) |
 | `scrum pto decline <id> -n "reason"` | decline a request (manager/admin) |
 | `scrum employees` | list employees (manager/admin only) |

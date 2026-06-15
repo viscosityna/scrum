@@ -1,7 +1,7 @@
 import kleur from 'kleur';
 import { getConfig } from '../config.js';
 import { getAccessToken } from '../oauth.js';
-import { api, ApiError, type PtoRequestSummary } from '../api.js';
+import { api, ApiError, type PtoRequestSummary, type PtoRequestDetail } from '../api.js';
 
 // Status ids the server uses — keep in lockstep with HR_TIMEOFF_REQUEST_STATUS.
 const STATUS_NAME_TO_ID: Record<string, string> = {
@@ -257,6 +257,58 @@ export async function ptoApproveCommand(idStr: string, opts: { note?: string; js
     `${kleur.green('approved')} PTO request ${kleur.bold('#' + result.id)} → ${kleur.bold(result.status_label)}` +
       (result.note_added === 'true' ? kleur.dim('  (note added)') : ''),
   );
+}
+
+export async function ptoShowCommand(idStr: string, opts: { json?: boolean }) {
+  const id = Number(idStr);
+  if (!Number.isFinite(id) || id <= 0) {
+    throw new Error(`invalid request id "${idStr}"`);
+  }
+  const r = await api.ptoRequest(id);
+  if (opts.json) {
+    process.stdout.write(JSON.stringify(r, null, 2) + '\n');
+    return;
+  }
+  renderPtoDetail(r);
+}
+
+function renderPtoDetail(r: PtoRequestDetail): void {
+  const requestor = r.employee_name ?? r.employee_username ?? `#${r.employee_id}`;
+  const range =
+    r.start_date === r.end_date ? r.start_date : `${r.start_date} → ${r.end_date}`;
+  const approver =
+    r.approver_name?.trim() || r.approver_username || (r.approval_employee_id ? `#${r.approval_employee_id}` : '—');
+
+  console.log(
+    `${kleur.bold('PTO #' + r.id)}  ${kleur.cyan(r.employee_username ?? '—')}  ${kleur.dim('(' + requestor + ')')}`,
+  );
+  console.log(`  type:      ${r.type_label ?? '—'}`);
+  console.log(`  status:    ${statusColor(r as unknown as PtoRequestSummary)}`);
+  console.log(`  range:     ${range}  (${r.days.length} day${r.days.length === 1 ? '' : 's'})`);
+  console.log(`  approver:  ${approver}`);
+  if (r.approved_dt) console.log(`  approved:  ${r.approved_dt}`);
+
+  console.log('');
+  console.log(kleur.bold('Days:'));
+  if (r.days.length === 0) {
+    console.log(kleur.dim('  (none)'));
+  } else {
+    for (const d of r.days) {
+      console.log(`  ${d.date}  ${kleur.dim(d.hour_range_label ?? `#${d.hour_range_id}`)}`);
+    }
+  }
+
+  console.log('');
+  console.log(kleur.bold('Notes:'));
+  if (r.notes.length === 0) {
+    console.log(kleur.dim('  (none)'));
+  } else {
+    for (const n of r.notes) {
+      const who = n.author_username ?? `#${n.author_id}`;
+      const when = (n.created_at ?? '').slice(0, 10);
+      console.log(`  ${kleur.dim(when + '  ' + who.padEnd(12))}  ${n.note}`);
+    }
+  }
 }
 
 export async function ptoDeclineCommand(idStr: string, opts: { note?: string; json?: boolean }) {

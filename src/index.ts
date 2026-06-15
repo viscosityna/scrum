@@ -14,6 +14,7 @@ import {
   ptoRequestsCommand,
   ptoApproveCommand,
   ptoDeclineCommand,
+  ptoShowCommand,
 } from './commands/pto.js';
 import { employeesCommand } from './commands/employees.js';
 import { reportProjectCommand, reportTeamCommand } from './commands/report.js';
@@ -129,6 +130,12 @@ pto
   .option('--mine', 'requests routed to you for approval (alias for --approver <self>)')
   .option('--json', 'output JSON')
   .action(ptoRequestsCommand);
+
+pto
+  .command('show <request_id>')
+  .description('show one PTO request in detail, including days + notes')
+  .option('--json', 'output JSON')
+  .action(ptoShowCommand);
 
 pto
   .command('approve <request_id>')
