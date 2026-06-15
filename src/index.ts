@@ -16,6 +16,7 @@ import {
   ptoDeclineCommand,
 } from './commands/pto.js';
 import { employeesCommand } from './commands/employees.js';
+import { reportProjectCommand, reportTeamCommand } from './commands/report.js';
 import { updateCommand } from './commands/update.js';
 
 const program = new Command();
@@ -142,6 +143,24 @@ pto
   .option('-n, --note <note>', 'optional reason attached to the decline')
   .option('--json', 'output JSON')
   .action((id, opts) => ptoDeclineCommand(id, opts));
+
+const report = program
+  .command('report')
+  .description('manager reports (manager/admin only)');
+
+report
+  .command('project <idOrAbbr>')
+  .description('actuals vs budget + by-resource breakdown for one project')
+  .option('--json', 'output JSON')
+  .action(reportProjectCommand);
+
+report
+  .command('team')
+  .description('weekly hours summary (org-wide or one employee via --for)')
+  .option('--week <YYYY-MM-DD>', 'anchor to the week containing this date (default: this week)')
+  .option('--for <username>', 'limit to one employee')
+  .option('--json', 'output JSON')
+  .action(reportTeamCommand);
 
 program
   .command('employees')

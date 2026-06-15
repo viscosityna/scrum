@@ -229,6 +229,17 @@ export const api = {
 
   declinePto: (id: number, body: { note?: string } = {}) =>
     request<PtoRequestActionResult>('POST', `/pto/requests/${id}/decline`, body),
+
+  reportProject: (projectId: number) =>
+    request<ProjectReport>('GET', `/reports/project/${projectId}`),
+
+  reportTeam(params: { week?: string; for?: string } = {}) {
+    const qs = new URLSearchParams();
+    if (params.week) qs.set('week', params.week);
+    if (params.for) qs.set('for_upn', params.for);
+    const suffix = qs.toString() ? `?${qs}` : '';
+    return request<TeamReport>('GET', `/reports/team${suffix}`);
+  },
 };
 
 export interface PtoRequestSummary {
@@ -276,4 +287,50 @@ export interface PtoRequestActionResult {
   approval_employee_id?: number;
   note_added?: 'true' | 'false';
   idempotent?: 'true';
+}
+
+export interface ProjectReport {
+  project_id: number;
+  project_abbr: string | null;
+  name: string;
+  description: string | null;
+  client_name: string | null;
+  status_label: string | null;
+  cycle_label: string | null;
+  manager_name: string | null;
+  owner_name: string | null;
+  budget_hours: number | null;
+  budget_cost: number | null;
+  total_hours: number;
+  mtd_hours: number;
+  wtd_hours: number;
+  remaining_hours?: number;
+  pct_of_budget?: number;
+  resources: Array<{
+    employee_id: number;
+    username: string | null;
+    name: string | null;
+    is_active: 'Y' | 'N';
+    total_hours: number;
+    mtd_hours: number;
+    wtd_hours: number;
+  }>;
+}
+
+export interface TeamReport {
+  week_start: string;
+  week_end: string;
+  total_hours: number;
+  employees: Array<{
+    employee_id: number;
+    username: string | null;
+    name: string | null;
+    week_hours: number;
+    by_project: Array<{
+      project_id: number;
+      project_abbr: string | null;
+      name: string | null;
+      hours: number;
+    }>;
+  }>;
 }

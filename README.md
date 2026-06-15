@@ -79,6 +79,10 @@ If sign-in succeeds but `scrum me` says "no scrumtime employee record was found"
 | `scrum pto approve <id> -n "note"` | approve a request (manager/admin) |
 | `scrum pto decline <id> -n "reason"` | decline a request (manager/admin) |
 | `scrum employees` | list employees (manager/admin only) |
+| `scrum report project <ABBR>` | actuals vs budget + by-resource breakdown (manager/admin) |
+| `scrum report team` | this week's hours across the org (manager/admin) |
+| `scrum report team --week 2026-06-08` | anchor to a different week |
+| `scrum report team --for kchambers` | one person's weekly summary |
 | `scrum logout` | clear cached tokens |
 | `scrum update` | check for a newer release |
 | `scrum config` | show current CLI config |
